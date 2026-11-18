@@ -2,63 +2,82 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ChecklistItem;
+use App\Models\ChecklistSection;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class ChecklistItemController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): View
     {
-        //
+        $sections = ChecklistSection::orderBy('position')
+            ->with(['items'])
+            ->get();
+
+        return view('checklist.index', ['sections' => $sections]);
+    }
+
+    public function create(): View
+    {
+        return view('checklist.form', [
+            'item' => new ChecklistItem(['number' => (int) ChecklistItem::max('number') + 1, 'is_active' => true]),
+            'sections' => ChecklistSection::orderBy('position')->get(),
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $this->validated($request);
+
+        ChecklistItem::create($data);
+
+        return redirect()->route('checklist-items.index')->with('success', 'Butir pemeriksaan berhasil ditambahkan.');
+    }
+
+    public function edit(ChecklistItem $checklistItem): View
+    {
+        return view('checklist.form', [
+            'item' => $checklistItem,
+            'sections' => ChecklistSection::orderBy('position')->get(),
+        ]);
+    }
+
+    public function update(Request $request, ChecklistItem $checklistItem): RedirectResponse
+    {
+        $checklistItem->update($this->validated($request));
+
+        return redirect()->route('checklist-items.index')->with('success', 'Butir pemeriksaan berhasil diperbarui.');
+    }
+
+    public function destroy(ChecklistItem $checklistItem): RedirectResponse
+    {
+        if ($checklistItem->answers()->exists()) {
+            return redirect()->route('checklist-items.index')->with('error', 'Butir sudah pernah dipakai pada kartu kendali sehingga tidak dapat dihapus. Nonaktifkan saja agar tidak muncul pada kartu kendali baru.');
+        }
+
+        $checklistItem->delete();
+
+        return redirect()->route('checklist-items.index')->with('success', 'Butir pemeriksaan berhasil dihapus.');
     }
 
     /**
-     * Show the form for creating a new resource.
+     * @return array<string, mixed>
      */
-    public function create()
+    private function validated(Request $request): array
     {
-        //
-    }
+        $data = $request->validate([
+            'checklist_section_id' => ['required', 'exists:checklist_sections,id'],
+            'number' => ['required', 'integer', 'min:1', 'max:999'],
+            'group_label' => ['nullable', 'string', 'max:100'],
+            'content' => ['required', 'string', 'max:5000'],
+            'position' => ['required', 'integer', 'min:1', 'max:999'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+        $data['is_active'] = $request->boolean('is_active');
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return $data;
     }
 }

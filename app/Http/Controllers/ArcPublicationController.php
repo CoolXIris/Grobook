@@ -2,63 +2,69 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ArcPublication;
+use App\Models\Publication;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class ArcPublicationController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): View
     {
-        //
+        $arcPublications = ArcPublication::orderBy('title')->paginate(20);
+
+        return view('arc.index', ['arcPublications' => $arcPublications]);
+    }
+
+    public function create(): View
+    {
+        return view('arc.form', ['arcPublication' => new ArcPublication(['is_active' => true])]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        ArcPublication::create($this->validated($request));
+
+        return redirect()->route('arc-publications.index')->with('success', 'Judul publikasi ARC berhasil ditambahkan.');
+    }
+
+    public function edit(ArcPublication $arcPublication): View
+    {
+        return view('arc.form', ['arcPublication' => $arcPublication]);
+    }
+
+    public function update(Request $request, ArcPublication $arcPublication): RedirectResponse
+    {
+        $arcPublication->update($this->validated($request));
+
+        return redirect()->route('arc-publications.index')->with('success', 'Judul publikasi ARC berhasil diperbarui.');
+    }
+
+    public function destroy(ArcPublication $arcPublication): RedirectResponse
+    {
+        if (Publication::where('arc_publication_id', $arcPublication->id)->exists()) {
+            return redirect()->route('arc-publications.index')->with('error', 'Judul sudah dipakai pada pengajuan publikasi sehingga tidak dapat dihapus. Nonaktifkan saja.');
+        }
+
+        $arcPublication->delete();
+
+        return redirect()->route('arc-publications.index')->with('success', 'Judul publikasi ARC berhasil dihapus.');
     }
 
     /**
-     * Show the form for creating a new resource.
+     * @return array<string, mixed>
      */
-    public function create()
+    private function validated(Request $request): array
     {
-        //
-    }
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:500'],
+            'title_en' => ['required', 'string', 'max:500'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+        $data['is_active'] = $request->boolean('is_active');
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return $data;
     }
 }
