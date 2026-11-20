@@ -28,9 +28,9 @@ enum PublicationStatus: string
     public function badgeClasses(): string
     {
         return match ($this) {
-            self::Diajukan, self::ReviewDls, self::ReviewAkhir => 'bg-amber-100 text-amber-800',
-            self::RevisiKetuaTim, self::RevisiDls, self::RevisiKetuaDls => 'bg-red-100 text-red-800',
-            self::Selesai => 'bg-green-100 text-green-800',
+            self::Diajukan, self::ReviewDls, self::ReviewAkhir => 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20',
+            self::RevisiKetuaTim, self::RevisiDls, self::RevisiKetuaDls => 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20',
+            self::Selesai => 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20',
         };
     }
 

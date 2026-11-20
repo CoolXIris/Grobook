@@ -6,7 +6,7 @@
     <title>@yield('title', 'Masuk') - Grobook</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="flex min-h-screen items-center justify-center bg-blue-950 px-4 font-sans antialiased">
+<body class="flex min-h-screen items-center justify-center bg-slate-50 px-4 font-sans text-slate-800 antialiased">
     @yield('content')
 </body>
 </html>

@@ -3,11 +3,14 @@
 @section('title', 'Masuk')
 
 @section('content')
-    <div class="w-full max-w-md">
-        <div class="rounded-2xl bg-white p-8 shadow-xl">
-            <div class="text-center">
-                <p class="text-3xl font-bold tracking-wide text-blue-950">Grobook</p>
-                <p class="mt-2 text-sm text-slate-500">Sistem Pengajuan Naskah Publikasi<br>BPS Provinsi Sumatera Selatan</p>
+    <div class="w-full max-w-sm">
+        <div class="rounded-2xl border border-slate-200/80 bg-white p-8 shadow-xs">
+            <div class="flex flex-col items-center text-center">
+                <div class="mb-4 flex size-14 items-center justify-center rounded-xl bg-slate-50 p-2.5 ring-1 ring-slate-200/80">
+                    <img src="{{ asset('img/logo_bps.svg') }}" alt="Logo BPS" class="size-full object-contain">
+                </div>
+                <p class="text-2xl font-bold tracking-tight text-slate-900">Grobook</p>
+                <p class="mt-1.5 text-xs leading-relaxed text-slate-500">Sistem Pengajuan Naskah Publikasi<br>BPS Provinsi Sumatera Selatan</p>
             </div>
 
             <div class="mt-6">
@@ -15,8 +18,8 @@
             </div>
 
             <a href="{{ route('auth.google.redirect') }}"
-               class="mt-2 flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
-                <svg class="size-5" viewBox="0 0 24 24">
+               class="mt-2 flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-2xs transition hover:border-slate-300 hover:bg-slate-50">
+                <svg class="size-4.5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -25,11 +28,11 @@
                 Masuk dengan Google
             </a>
 
-            <p class="mt-6 text-center text-xs leading-relaxed text-slate-400">
+            <p class="mt-6 border-t border-slate-100 pt-5 text-center text-xs leading-relaxed text-slate-400">
                 Gunakan akun Google yang terdaftar di BPS Provinsi Sumatera Selatan.
                 Akun tim pembuat naskah perlu didaftarkan oleh ketua tim sebelum dapat mengajukan publikasi.
             </p>
         </div>
-        <p class="mt-4 text-center text-xs text-blue-300">Dokumentasi proses publikasi internal ARC & NON ARC</p>
+        <p class="mt-4 text-center text-xs text-slate-400">Dokumentasi proses publikasi internal ARC &amp; NON ARC</p>
     </div>
 @endsection

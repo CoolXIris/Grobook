@@ -7,81 +7,101 @@
     <title>@yield('title', 'Dashboard') - Grobook</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-slate-100 font-sans text-slate-800 antialiased">
+<body class="min-h-screen bg-slate-50 font-sans text-slate-800 antialiased">
     <div class="flex min-h-screen">
-        <aside class="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-blue-950 text-white lg:flex">
-            <div class="border-b border-blue-900 px-6 py-5">
-                <p class="text-xl font-bold tracking-wide">Grobook</p>
-                <p class="mt-1 text-xs text-blue-300">Publikasi BPS Prov. Sumatera Selatan</p>
+        <aside class="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-[#032860] bg-[#043277] text-white lg:flex">
+            <div class="flex items-center gap-3 border-b border-[#032860] px-5 py-4">
+                <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white/10 p-1.5 ring-1 ring-white/15">
+                    <img src="{{ asset('img/logo_bps.svg') }}" alt="Logo BPS" class="size-full object-contain">
+                </div>
+                <div class="min-w-0">
+                    <p class="text-base font-bold tracking-tight text-white">Grobook</p>
+                    <p class="truncate text-[11px] text-blue-200/80">Publikasi BPS Prov. Sumatera Selatan</p>
+                </div>
             </div>
             <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4 text-sm">
                 @php($nav = [
-                    ['route' => 'dashboard', 'label' => 'Dashboard', 'roles' => null],
-                    ['route' => 'publications.create', 'label' => 'Ajukan Publikasi', 'roles' => ['tim_naskah']],
-                    ['route' => 'reviews.content.index', 'label' => 'Review Konten', 'roles' => ['ketua_tim']],
-                    ['route' => 'team-members.index', 'label' => 'Anggota Tim', 'roles' => ['ketua_tim']],
-                    ['route' => 'reviews.dls.index', 'label' => 'Review Layout & Non-Konten', 'roles' => ['petugas_dls']],
-                    ['route' => 'documents.index', 'label' => 'Unduh Dokumen', 'roles' => ['petugas_dls']],
-                    ['route' => 'checklist-items.index', 'label' => 'Butir Kartu Kendali', 'roles' => ['petugas_dls']],
-                    ['route' => 'arc-publications.index', 'label' => 'Daftar Publikasi ARC', 'roles' => ['petugas_dls']],
-                    ['route' => 'teams.index', 'label' => 'Ketua Tim & Tim', 'roles' => ['petugas_dls']],
-                    ['route' => 'reviews.final.index', 'label' => 'Pengecekan Akhir', 'roles' => ['ketua_dls']],
-                    ['route' => 'users.index', 'label' => 'Kelola User', 'roles' => ['ketua_dls']],
-                    ['route' => 'publications.index', 'label' => 'Daftar Publikasi', 'roles' => null],
-                    ['route' => 'history.index', 'label' => 'Histori Publikasi', 'roles' => null],
+                    ['route' => 'dashboard', 'label' => 'Dashboard', 'roles' => null, 'icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
+                    ['route' => 'publications.create', 'label' => 'Ajukan Publikasi', 'roles' => ['tim_naskah'], 'icon' => 'M12 4v16m8-8H4'],
+                    ['route' => 'reviews.content.index', 'label' => 'Review Konten', 'roles' => ['ketua_tim'], 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    ['route' => 'team-members.index', 'label' => 'Anggota Tim', 'roles' => ['ketua_tim'], 'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z'],
+                    ['route' => 'reviews.dls.index', 'label' => 'Review Layout & Non-Konten', 'roles' => ['petugas_dls'], 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'],
+                    ['route' => 'documents.index', 'label' => 'Unduh Dokumen', 'roles' => ['petugas_dls'], 'icon' => 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4'],
+                    ['route' => 'checklist-items.index', 'label' => 'Butir Kartu Kendali', 'roles' => ['petugas_dls'], 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
+                    ['route' => 'arc-publications.index', 'label' => 'Daftar Publikasi ARC', 'roles' => ['petugas_dls'], 'icon' => 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'],
+                    ['route' => 'teams.index', 'label' => 'Ketua Tim & Tim', 'roles' => ['petugas_dls'], 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
+                    ['route' => 'reviews.final.index', 'label' => 'Pengecekan Akhir', 'roles' => ['ketua_dls'], 'icon' => 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z'],
+                    ['route' => 'users.index', 'label' => 'Kelola User', 'roles' => ['ketua_dls'], 'icon' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z'],
+                    ['route' => 'publications.index', 'label' => 'Daftar Publikasi', 'roles' => null, 'icon' => 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10'],
+                    ['route' => 'history.index', 'label' => 'Histori Publikasi', 'roles' => null, 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
                 ])
                 @foreach ($nav as $item)
                     @continue($item['roles'] !== null && ! in_array(auth()->user()->role->value, $item['roles'], true))
+                    @php($active = request()->routeIs($item['route']) || request()->routeIs($item['route'].'*'))
                     <a href="{{ route($item['route']) }}"
-                       class="block rounded-lg px-3 py-2 transition {{ request()->routeIs($item['route']) || request()->routeIs($item['route'].'*') ? 'bg-blue-800 font-semibold text-white' : 'text-blue-200 hover:bg-blue-900 hover:text-white' }}">
-                        {{ $item['label'] }}
+                       class="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors {{ $active ? 'bg-white/15 font-semibold text-white shadow-2xs ring-1 ring-inset ring-white/20' : 'text-blue-100/75 hover:bg-white/10 hover:text-white' }}">
+                        <svg class="size-4 shrink-0 {{ $active ? 'text-white' : 'text-blue-200/70 group-hover:text-white' }}" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['icon'] }}"/>
+                        </svg>
+                        <span class="truncate">{{ $item['label'] }}</span>
                     </a>
                 @endforeach
             </nav>
-            <div class="border-t border-blue-900 px-6 py-4 text-xs text-blue-300">
-                Proses pengajuan publikasi internal<br>ARC & NON ARC
+            <div class="border-t border-[#032860] px-5 py-3.5 text-[11px] leading-relaxed text-blue-200/75">
+                Proses pengajuan publikasi internal<br>
+                <span class="font-medium text-white">ARC &amp; NON ARC</span>
             </div>
         </aside>
 
         <div class="flex min-w-0 flex-1 flex-col lg:pl-64">
-            <header class="sticky top-0 z-20 border-b border-slate-200 bg-white">
-                <div class="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
+            <header class="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
+                <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
                     <div class="flex items-center gap-3">
                         <button type="button" id="sidebar-toggle" class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" aria-label="Buka menu">
                             <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                         </button>
-                        <div>
-                            <p class="text-sm font-semibold lg:hidden">Grobook</p>
-                            <h1 class="hidden text-lg font-semibold lg:block">@yield('title', 'Dashboard')</h1>
+                        <div class="flex items-center gap-2.5">
+                            <img src="{{ asset('img/logo_bps.svg') }}" alt="Logo BPS" class="size-7 object-contain lg:hidden">
+                            <div>
+                                <p class="text-sm font-bold text-slate-900 lg:hidden">Grobook</p>
+                                <h1 class="hidden text-base font-semibold tracking-tight text-slate-900 lg:block">@yield('title', 'Dashboard')</h1>
+                            </div>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <div class="text-right">
-                            <p class="text-sm font-semibold">{{ auth()->user()->name }}</p>
+                        <div class="hidden text-right sm:block">
+                            <p class="text-sm font-semibold text-slate-800">{{ auth()->user()->name }}</p>
                             <p class="text-xs text-slate-500">{{ auth()->user()->role->label() }}</p>
                         </div>
                         @if (auth()->user()->avatar)
-                            <img src="{{ auth()->user()->avatar }}" alt="" class="size-9 rounded-full" referrerpolicy="no-referrer">
+                            <img src="{{ auth()->user()->avatar }}" alt="" class="size-8 rounded-full ring-1 ring-slate-200" referrerpolicy="no-referrer">
                         @else
-                            <div class="flex size-9 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-800">{{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}</div>
+                            <div class="flex size-8 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-700 ring-1 ring-inset ring-blue-600/20">{{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}</div>
                         @endif
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100">Keluar</button>
+                            <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-2xs transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
+                                <span>Keluar</span>
+                            </button>
                         </form>
                     </div>
                 </div>
-                <div id="mobile-nav" class="hidden border-t border-slate-200 px-4 py-2 lg:hidden">
+                <div id="mobile-nav" class="hidden border-t border-slate-200/80 bg-white px-4 py-2 lg:hidden">
                     <nav class="grid gap-1 text-sm">
                         @foreach ($nav as $item)
                             @continue($item['roles'] !== null && ! in_array(auth()->user()->role->value, $item['roles'], true))
-                            <a href="{{ route($item['route']) }}" class="rounded px-2 py-1.5 {{ request()->routeIs($item['route']) ? 'bg-blue-50 font-semibold text-blue-800' : 'text-slate-600 hover:bg-slate-100' }}">{{ $item['label'] }}</a>
+                            <a href="{{ route($item['route']) }}" class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 {{ request()->routeIs($item['route']) ? 'bg-blue-50 font-semibold text-blue-800' : 'text-slate-600 hover:bg-slate-50' }}">
+                                <svg class="size-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['icon'] }}"/>
+                                </svg>
+                                <span>{{ $item['label'] }}</span>
+                            </a>
                         @endforeach
                     </nav>
                 </div>
             </header>
 
-            <main class="flex-1 px-4 py-6 sm:px-6">
+            <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
                 <x-flash />
                 @yield('content')
             </main>

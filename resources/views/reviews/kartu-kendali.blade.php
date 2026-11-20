@@ -31,7 +31,7 @@
 
                 @foreach ($sections as $section)
                     <div class="mb-6">
-                        <h4 class="rounded-lg bg-blue-950 px-3 py-2 text-sm font-bold text-white">{{ $section->name }}</h4>
+                        <h4 class="rounded-lg bg-[#043277] px-3.5 py-2 text-sm font-semibold tracking-wide text-white shadow-2xs">{{ $section->name }}</h4>
                         @php($lastGroup = null)
                         @foreach ($section->activeItems as $item)
                             @if ($item->group_label && $item->group_label !== $lastGroup)
