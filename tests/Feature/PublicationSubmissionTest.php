@@ -29,7 +29,7 @@ class PublicationSubmissionTest extends TestCase
         Storage::fake('local');
         $this->freezeTime();
         [, , $author] = $this->makeTeam();
-        $arc = ArcPublication::factory()->create();
+        $arc = ArcPublication::factory()->create(['team_id' => $author->team_id]);
 
         $response = $this->actingAs($author)->post(route('publications.store'), [
             'type' => 'arc',
@@ -129,7 +129,7 @@ class PublicationSubmissionTest extends TestCase
     public function test_submission_rejects_inactive_arc_title(): void
     {
         [, , $author] = $this->makeTeam();
-        $arc = ArcPublication::factory()->inactive()->create();
+        $arc = ArcPublication::factory()->inactive()->create(['team_id' => $author->team_id]);
 
         $this->actingAs($author)->post(route('publications.store'), [
             'type' => 'arc',
@@ -140,6 +140,60 @@ class PublicationSubmissionTest extends TestCase
             'file' => $this->pdfUpload(),
             'drive_link' => 'https://drive.google.com/file/d/abc',
         ])->assertSessionHasErrors('arc_publication_id');
+    }
+
+    public function test_tim_naskah_cannot_submit_arc_title_assigned_to_other_team(): void
+    {
+        [, , $author] = $this->makeTeam();
+        [$otherTeam] = $this->makeTeam();
+        $otherArc = ArcPublication::factory()->create(['team_id' => $otherTeam->id]);
+
+        $this->actingAs($author)->post(route('publications.store'), [
+            'type' => 'arc',
+            'arc_publication_id' => $otherArc->id,
+            'release_date' => '12/25/2026',
+            'frequency' => Frequency::Tahunan->value,
+            'language' => Language::Indonesia->value,
+            'file' => $this->pdfUpload(),
+            'drive_link' => 'https://drive.google.com/file/d/abc',
+        ])->assertSessionHasErrors('arc_publication_id');
+    }
+
+    public function test_non_arc_accepts_even_roman_numeral_pages_romawi_and_rejects_odd(): void
+    {
+        Storage::fake('local');
+        [, , $author] = $this->makeTeam();
+
+        $oddPayload = $this->nonArcPayload();
+        $oddPayload['pages_romawi'] = 'III';
+
+        $this->actingAs($author)->post(route('publications.store'), $oddPayload)
+            ->assertSessionHasErrors('pages_romawi');
+
+        $evenPayload = $this->nonArcPayload();
+        $evenPayload['pages_romawi'] = 'XIV';
+
+        $this->actingAs($author)->post(route('publications.store'), $evenPayload)
+            ->assertSessionHasNoErrors();
+
+        $publication = Publication::firstOrFail();
+        $this->assertSame(14, $publication->pages_romawi);
+    }
+
+    public function test_submission_rejects_pdf_over_30mb(): void
+    {
+        [, , $author] = $this->makeTeam();
+        $arc = ArcPublication::factory()->create(['team_id' => $author->team_id]);
+
+        $this->actingAs($author)->post(route('publications.store'), [
+            'type' => 'arc',
+            'arc_publication_id' => $arc->id,
+            'release_date' => '12/25/2026',
+            'frequency' => Frequency::Tahunan->value,
+            'language' => Language::Indonesia->value,
+            'file' => UploadedFile::fake()->create('besar.pdf', 31000, 'application/pdf'),
+            'drive_link' => 'https://drive.google.com/file/d/abc',
+        ])->assertSessionHasErrors('file');
     }
 
     public function test_user_without_team_cannot_submit(): void

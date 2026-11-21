@@ -43,7 +43,7 @@ class PublicationFactory extends Factory
             'type' => PublicationType::NonArc,
             'arc_publication_id' => null,
             'year' => (int) date('Y'),
-            'pages_romawi' => fake()->numberBetween(4, 20),
+            'pages_romawi' => fake()->randomElement(range(2, 20, 2)),
             'pages_arabic' => fake()->numberBetween(30, 200),
             'has_cooperation' => false,
             'published_for' => PublishedFor::Internal,

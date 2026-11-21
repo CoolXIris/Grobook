@@ -23,8 +23,7 @@ class StoreQualityCardRequest extends FormRequest
     {
         return [
             'answers' => ['required', 'array'],
-            'answers.*.status' => ['required', Rule::enum(ChecklistStatus::class)],
-            'answers.*.note' => ['nullable', 'string', 'max:1000'],
+            'answers.*.status' => ['required', Rule::in([ChecklistStatus::Sesuai->value])],
         ];
     }
 
@@ -35,16 +34,12 @@ class StoreQualityCardRequest extends FormRequest
     {
         return [
             function (Validator $validator) {
-                if ($validator->errors()->isNotEmpty()) {
-                    return;
-                }
-
                 $activeItemIds = ChecklistItem::active()->pluck('id')->all();
                 $answers = $this->input('answers', []);
-                $answeredIds = array_map('intval', array_keys($answers));
+                $answeredIds = is_array($answers) ? array_map('intval', array_keys($answers)) : [];
 
                 if (array_diff($activeItemIds, $answeredIds) !== []) {
-                    $validator->errors()->add('answers', 'Semua butir pemeriksaan wajib diisi sebelum menyetujui publikasi.');
+                    $validator->errors()->add('answers', 'Semua butir pemeriksaan wajib dicentang sebelum menyetujui publikasi.');
 
                     return;
                 }
@@ -56,8 +51,8 @@ class StoreQualityCardRequest extends FormRequest
                 }
 
                 foreach ($answers as $answer) {
-                    if (($answer['status'] ?? null) === ChecklistStatus::TidakSesuai->value) {
-                        $validator->errors()->add('answers', 'Masih ada butir yang Tidak Sesuai. Gunakan tombol Minta Revisi untuk mengembalikan naskah ke tim pembuat.');
+                    if (($answer['status'] ?? null) !== ChecklistStatus::Sesuai->value) {
+                        $validator->errors()->add('answers', 'Semua butir pemeriksaan wajib dicentang sebelum menyetujui publikasi.');
 
                         return;
                     }

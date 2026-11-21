@@ -3,12 +3,15 @@
 namespace Database\Seeders;
 
 use App\Models\ArcPublication;
+use App\Models\Team;
 use Illuminate\Database\Seeder;
 
 class ArcPublicationSeeder extends Seeder
 {
     public function run(): void
     {
+        $defaultTeamId = Team::first()?->id;
+
         $titles = [
             ['Provinsi Sumatera Selatan Dalam Angka 2026', 'Sumatera Selatan Province in Figures 2026'],
             ['Statistik Daerah Provinsi Sumatera Selatan 2026', 'Regional Statistics of Sumatera Selatan Province 2026'],
@@ -25,7 +28,7 @@ class ArcPublicationSeeder extends Seeder
         foreach ($titles as [$title, $titleEn]) {
             ArcPublication::firstOrCreate(
                 ['title' => $title],
-                ['title_en' => $titleEn, 'is_active' => true],
+                ['title_en' => $titleEn, 'is_active' => true, 'team_id' => $defaultTeamId],
             );
         }
     }

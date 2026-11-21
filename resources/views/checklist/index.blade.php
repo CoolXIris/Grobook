@@ -4,14 +4,26 @@
 
 @section('content')
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm text-slate-600">Kelola butir pemeriksaan kartu kendali kualitas. Butir yang nonaktif tidak muncul pada kartu kendali baru, namun tetap tersimpan pada kartu kendali lama.</p>
-        <a href="{{ route('checklist-items.create') }}" class="rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">+ Tambah Butir</a>
+        <p class="text-sm text-slate-600">Kelola bagian (judul kategori) dan butir pemeriksaan kartu kendali kualitas. Bagian maupun butir dapat ditambah, diubah, atau dihapus kapan saja.</p>
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ route('checklist-sections.create') }}" class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 hover:bg-blue-100">+ Tambah Bagian</a>
+            <a href="{{ route('checklist-items.create') }}" class="rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">+ Tambah Butir</a>
+        </div>
     </div>
 
     @foreach ($sections as $section)
         <div class="mb-6 overflow-x-auto rounded-xl border border-slate-200 bg-white">
-            <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3">
                 <h2 class="text-sm font-bold uppercase tracking-wide text-slate-700">{{ $section->position }}. {{ $section->name }}</h2>
+                <div class="flex items-center gap-3 text-xs">
+                    <a href="{{ route('checklist-items.create', ['section' => $section->id]) }}" class="font-semibold text-slate-600 hover:text-blue-700 hover:underline">+ Butir</a>
+                    <a href="{{ route('checklist-sections.edit', $section) }}" class="font-semibold text-blue-700 hover:underline">Edit Bagian</a>
+                    <form action="{{ route('checklist-sections.destroy', $section) }}" method="POST" class="inline" onsubmit="return confirm('Hapus bagian &quot;{{ $section->position }}. {{ $section->name }}&quot; beserta seluruh butir di dalamnya?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="font-semibold text-red-600 hover:underline">Hapus Bagian</button>
+                    </form>
+                </div>
             </div>
             <table class="min-w-full divide-y divide-slate-100 text-sm">
                 <thead class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">

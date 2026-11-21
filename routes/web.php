@@ -3,6 +3,7 @@
 use App\Http\Controllers\ArcPublicationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ChecklistItemController;
+use App\Http\Controllers\ChecklistSectionController;
 use App\Http\Controllers\ContentReviewController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DlsReviewController;
@@ -62,6 +63,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:petugas_dls')->group(function () {
         Route::get('/review-dls', [DlsReviewController::class, 'index'])->name('reviews.dls.index');
         Route::post('/publikasi/{publication}/teruskan', [DlsReviewController::class, 'forward'])->name('reviews.dls.forward');
+        Route::resource('checklist-sections', ChecklistSectionController::class)->except(['index', 'show']);
         Route::resource('checklist-items', ChecklistItemController::class)->except(['show']);
         Route::resource('arc-publications', ArcPublicationController::class)->except(['show']);
         Route::get('/ketua-tim', [TeamController::class, 'index'])->name('teams.index');
@@ -69,6 +71,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/ketua-tim', [TeamController::class, 'store'])->name('teams.store');
         Route::get('/ketua-tim/{team}/edit', [TeamController::class, 'edit'])->name('teams.edit');
         Route::put('/ketua-tim/{team}', [TeamController::class, 'update'])->name('teams.update');
+        Route::delete('/ketua-tim/{team}', [TeamController::class, 'destroy'])->name('teams.destroy');
         Route::get('/unduh-dokumen', [DocumentController::class, 'index'])->name('documents.index');
         Route::get('/publikasi/{publication}/unduh', [DocumentController::class, 'download'])->name('documents.download');
     });

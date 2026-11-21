@@ -24,9 +24,9 @@
                 <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
                     <div>
                         <h3 class="font-semibold">Manual Pemeriksaan Mandiri Publikasi</h3>
-                        <p class="text-xs text-slate-500">Isi setiap butir: Sesuai / Tidak Sesuai / Tidak Relevan. Semua butir wajib diisi. Publikasi hanya dapat disetujui jika tidak ada butir yang Tidak Sesuai.</p>
+                        <p class="text-xs text-slate-500">Centang setiap butir pemeriksaan. Tombol Approve hanya dapat digunakan setelah seluruh butir dicentang oleh Ketua Tim.</p>
                     </div>
-                    <button type="button" id="mark-all" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100">Tandai semua Sesuai</button>
+                    <button type="button" id="mark-all" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100">Centang Semua</button>
                 </div>
 
                 @foreach ($sections as $section)
@@ -39,18 +39,16 @@
                                 @php($lastGroup = $item->group_label)
                             @endif
                             <div class="border-b border-slate-100 px-3 py-3">
-                                <div class="flex flex-wrap items-start justify-between gap-3">
-                                    <p class="min-w-0 flex-1 whitespace-pre-line text-sm text-slate-700"><span class="font-semibold">{{ $item->number }}.</span> {{ $item->content }}</p>
-                                    <div class="flex shrink-0 gap-3 text-xs">
-                                        @foreach (\App\Enums\ChecklistStatus::cases() as $status)
-                                            <label class="flex items-center gap-1">
-                                                <input type="radio" name="answers[{{ $item->id }}][status]" value="{{ $status->value }}" class="status-radio" @checked(old("answers.{$item->id}.status") === $status->value) required>
-                                                {{ $status->label() }}
-                                            </label>
-                                        @endforeach
-                                    </div>
-                                </div>
-                                <input type="text" name="answers[{{ $item->id }}][note]" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs" placeholder="Catatan (opsional)" value="{{ old("answers.{$item->id}.note") }}">
+                                <label class="flex cursor-pointer items-start justify-between gap-4">
+                                    <span class="min-w-0 flex-1 whitespace-pre-line text-sm text-slate-700"><span class="font-semibold">{{ $item->number }}.</span> {{ $item->content }}</span>
+                                    <span class="flex shrink-0 items-center gap-2 pt-0.5 text-xs font-semibold text-slate-700">
+                                        <input type="checkbox"
+                                               name="answers[{{ $item->id }}][status]"
+                                               value="{{ \App\Enums\ChecklistStatus::Sesuai->value }}"
+                                               class="status-checkbox size-4 rounded border-slate-300"
+                                               @checked(old("answers.{$item->id}.status") === \App\Enums\ChecklistStatus::Sesuai->value)>
+                                    </span>
+                                </label>
                                 @error("answers.{$item->id}.status")
                                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
@@ -62,7 +60,13 @@
 
             <div class="flex items-center justify-end gap-3">
                 <a href="{{ route('publications.show', $publication) }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">Batal</a>
-                <button type="submit" class="rounded-lg bg-green-700 px-5 py-2 text-sm font-semibold text-white hover:bg-green-600" onclick="return confirm('Setujui publikasi ini? Sistem akan membuat PDF kartu kendali dan meneruskan naskah ke Petugas DLS.')">Approve Publikasi & Generate Kartu Kendali</button>
+                <button type="submit"
+                        id="approve-submit-btn"
+                        disabled
+                        class="rounded-lg bg-green-700 px-5 py-2 text-sm font-semibold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                        onclick="return confirm('Setujui publikasi ini? Sistem akan membuat PDF kartu kendali dan meneruskan naskah ke Petugas DLS.')">
+                    Approve Publikasi &amp; Generate Kartu Kendali
+                </button>
             </div>
         </form>
 
@@ -77,8 +81,22 @@
     </div>
 
     <script>
+        const checkboxes = Array.from(document.querySelectorAll('.status-checkbox'));
+        const approveBtn = document.getElementById('approve-submit-btn');
+
+        const syncApproveButton = () => {
+            if (!approveBtn) return;
+            const allChecked = checkboxes.length > 0 && checkboxes.every(cb => cb.checked);
+            approveBtn.disabled = !allChecked;
+        };
+
+        checkboxes.forEach(cb => cb.addEventListener('change', syncApproveButton));
+
         document.getElementById('mark-all')?.addEventListener('click', () => {
-            document.querySelectorAll('.status-radio[value="sesuai"]').forEach(radio => radio.checked = true);
+            checkboxes.forEach(cb => cb.checked = true);
+            syncApproveButton();
         });
+
+        syncApproveButton();
     </script>
 @endsection

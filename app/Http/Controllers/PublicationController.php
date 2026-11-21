@@ -60,7 +60,9 @@ class PublicationController extends Controller
         return view('publications.form', [
             'type' => $typeEnum,
             'publication' => null,
-            'arcTitles' => $typeEnum === PublicationType::Arc ? ArcPublication::active()->orderBy('title')->get() : collect(),
+            'arcTitles' => $typeEnum === PublicationType::Arc
+                ? ArcPublication::active()->forTeam($request->user()->team_id)->orderBy('title')->get()
+                : collect(),
             'openRevision' => null,
         ]);
     }
@@ -71,7 +73,9 @@ class PublicationController extends Controller
         $attributes = Arr::except($data, ['file', 'drive_link']);
 
         if ($request->enum('type', PublicationType::class) === PublicationType::Arc) {
-            $arc = ArcPublication::active()->findOrFail($data['arc_publication_id']);
+            $arc = ArcPublication::active()
+                ->forTeam($request->user()->team_id)
+                ->findOrFail($data['arc_publication_id']);
             $attributes['title'] = $arc->title;
             $attributes['title_en'] = $arc->title_en;
         } else {
@@ -117,7 +121,9 @@ class PublicationController extends Controller
         return view('publications.form', [
             'type' => $publication->type,
             'publication' => $publication,
-            'arcTitles' => $publication->type === PublicationType::Arc ? ArcPublication::active()->orderBy('title')->get() : collect(),
+            'arcTitles' => $publication->type === PublicationType::Arc
+                ? ArcPublication::active()->forTeam($request->user()->team_id)->orderBy('title')->get()
+                : collect(),
             'openRevision' => $publication->openRevision,
         ]);
     }
@@ -128,7 +134,9 @@ class PublicationController extends Controller
         $attributes = Arr::except($data, ['file', 'drive_link']);
 
         if ($publication->type === PublicationType::Arc) {
-            $arc = ArcPublication::active()->findOrFail($data['arc_publication_id']);
+            $arc = ArcPublication::active()
+                ->forTeam($request->user()->team_id)
+                ->findOrFail($data['arc_publication_id']);
             $attributes['title'] = $arc->title;
             $attributes['title_en'] = $arc->title_en;
         } else {

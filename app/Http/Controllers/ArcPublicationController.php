@@ -12,7 +12,7 @@ class ArcPublicationController extends Controller
 {
     public function index(): View
     {
-        $arcPublications = ArcPublication::orderBy('title')->paginate(20);
+        $arcPublications = ArcPublication::with('team')->orderBy('title')->paginate(20);
 
         return view('arc.index', ['arcPublications' => $arcPublications]);
     }

@@ -8,8 +8,9 @@ use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['title', 'title_en', 'is_active'])]
+#[Fillable(['team_id', 'title', 'title_en', 'is_active'])]
 class ArcPublication extends Model
 {
     /** @use HasFactory<ArcPublicationFactory> */
@@ -22,9 +23,20 @@ class ArcPublication extends Model
         ];
     }
 
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
+    }
+
     #[Scope]
     protected function active(Builder $query): void
     {
         $query->where('is_active', true);
+    }
+
+    #[Scope]
+    protected function forTeam(Builder $query, ?int $teamId): void
+    {
+        $query->where('team_id', $teamId);
     }
 }

@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('quality_card_answers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('quality_card_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('checklist_item_id')->constrained()->restrictOnDelete();
+            $table->foreignId('checklist_item_id')->constrained()->cascadeOnDelete();
             $table->string('status', 20);
             $table->text('note')->nullable();
             $table->timestamps();

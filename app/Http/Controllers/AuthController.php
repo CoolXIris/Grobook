@@ -33,14 +33,12 @@ class AuthController extends Controller
             ]);
         }
 
-        $user = User::where('email', $googleUser->getEmail())->first();
+        $email = mb_strtolower((string) $googleUser->getEmail());
+        $user = User::where('email', $email)->first();
 
-        if ($user === null) {
-            $user = User::create([
-                'name' => $googleUser->getName() ?? $googleUser->getEmail(),
-                'email' => $googleUser->getEmail(),
-                'role' => Role::TimNaskah,
-                'email_verified_at' => now(),
+        if ($user === null || $user->role === null || ($user->role === Role::TimNaskah && $user->team_id === null)) {
+            return redirect()->route('login')->withErrors([
+                'google' => 'Akun Google Anda belum terdaftar atau belum memiliki akses di Grobook. Hubungi Ketua Tim atau Petugas DLS.',
             ]);
         }
 

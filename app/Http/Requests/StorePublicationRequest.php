@@ -9,12 +9,21 @@ use App\Enums\Orientation;
 use App\Enums\PublicationType;
 use App\Enums\PublishedFor;
 use App\Models\Publication;
+use App\Support\RomanNumeral;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StorePublicationRequest extends FormRequest
 {
+    public const PAPER_SIZES = [
+        'A4' => 'A4 (21 x 29,7 cm)',
+        'A5' => 'A5 (14,8 x 21 cm)',
+        'B5' => 'B5 (17,6 x 25 cm)',
+        'Letter' => 'Letter (21,6 x 27,9 cm)',
+        'Legal' => 'Legal (21,6 x 35,6 cm)',
+    ];
+
     public function authorize(): bool
     {
         return $this->user()->can('create', Publication::class);
@@ -28,6 +37,21 @@ class StorePublicationRequest extends FormRequest
             $this->merge([
                 'release_date' => $date !== false ? $date->format('Y-m-d') : $this->input('release_date'),
             ]);
+        }
+
+        if ($this->filled('pages_romawi') && ! is_numeric($this->input('pages_romawi'))) {
+            $parsedRoman = RomanNumeral::toEvenInt($this->input('pages_romawi'));
+            if ($parsedRoman !== null) {
+                $this->merge(['pages_romawi' => $parsedRoman]);
+            }
+        }
+
+        if ($this->filled('paper_size')) {
+            $rawSize = $this->string('paper_size')->toString();
+            $flipped = array_flip(self::PAPER_SIZES);
+            if (isset($flipped[$rawSize])) {
+                $this->merge(['paper_size' => $flipped[$rawSize]]);
+            }
         }
     }
 
@@ -43,7 +67,9 @@ class StorePublicationRequest extends FormRequest
             'arc_publication_id' => [
                 Rule::requiredIf(! $isNonArc),
                 'nullable',
-                Rule::exists('arc_publications', 'id')->where('is_active', true),
+                Rule::exists('arc_publications', 'id')
+                    ->where('is_active', true)
+                    ->where('team_id', $this->user()->team_id),
             ],
             'title' => [Rule::requiredIf($isNonArc), 'nullable', 'string', 'max:500'],
             'title_en' => ['nullable', 'string', 'max:500'],
@@ -51,14 +77,25 @@ class StorePublicationRequest extends FormRequest
             'frequency' => ['required', Rule::enum(Frequency::class)],
             'language' => ['required', Rule::enum(Language::class)],
             'year' => [Rule::requiredIf($isNonArc), 'nullable', 'integer', 'min:1900', 'max:2100'],
-            'pages_romawi' => [Rule::requiredIf($isNonArc), 'nullable', 'integer', 'min:0', 'max:2000'],
+            'pages_romawi' => [
+                Rule::requiredIf($isNonArc),
+                'nullable',
+                'integer',
+                'min:2',
+                'max:100',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($value !== null && ((int) $value % 2 !== 0)) {
+                        $fail('Jumlah halaman romawi harus bernilai genap antara II (2) sampai C (100).');
+                    }
+                },
+            ],
             'pages_arabic' => [Rule::requiredIf($isNonArc), 'nullable', 'integer', 'min:1', 'max:5000'],
             'has_cooperation' => [Rule::requiredIf($isNonArc), 'nullable', 'boolean'],
             'published_for' => [Rule::requiredIf($isNonArc), 'nullable', Rule::enum(PublishedFor::class)],
             'cover_maker' => [Rule::requiredIf($isNonArc), 'nullable', Rule::enum(CoverMaker::class)],
             'orientation' => [Rule::requiredIf($isNonArc), 'nullable', Rule::enum(Orientation::class)],
-            'paper_size' => [Rule::requiredIf($isNonArc), 'nullable', 'string', Rule::in(['A4', 'A5', 'B5', 'Letter', 'Legal'])],
-            'file' => ['required', 'file', 'mimes:pdf', 'max:51200'],
+            'paper_size' => [Rule::requiredIf($isNonArc), 'nullable', 'string', Rule::in(array_keys(self::PAPER_SIZES))],
+            'file' => ['required', 'file', 'mimes:pdf', 'max:30720'],
             'drive_link' => ['required', 'url', 'max:1000'],
         ];
     }

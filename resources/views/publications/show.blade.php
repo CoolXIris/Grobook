@@ -22,19 +22,19 @@
                     <div><dt class="text-slate-500">Judul</dt><dd class="font-medium">{{ $publication->title }}</dd></div>
                     <div><dt class="text-slate-500">Judul Inggris</dt><dd class="font-medium">{{ $publication->title_en ?? '-' }}</dd></div>
                     <div><dt class="text-slate-500">Pembuat Naskah</dt><dd class="font-medium">{{ $publication->user->name }}</dd></div>
-                    <div><dt class="text-slate-500">Tim</dt><dd class="font-medium">{{ $publication->team->name }}</dd></div>
+                    <div><dt class="text-slate-500">Tim</dt><dd class="font-medium">{{ $publication->team->name }}@if ($publication->team->code) <span class="font-mono text-xs text-slate-500">({{ $publication->team->code }})</span>@endif</dd></div>
                     <div><dt class="text-slate-500">Frekuensi Terbit</dt><dd class="font-medium">{{ $publication->frequency->label() }}</dd></div>
                     <div><dt class="text-slate-500">Bahasa</dt><dd class="font-medium">{{ $publication->language->label() }}</dd></div>
                     <div><dt class="text-slate-500">{{ $publication->type === \App\Enums\PublicationType::Arc ? 'Jadwal Rilis' : 'Estimasi Rilis' }}</dt><dd class="font-medium">{{ $publication->release_date->format('m/d/Y') }}</dd></div>
                     @if ($publication->type === \App\Enums\PublicationType::NonArc)
                         <div><dt class="text-slate-500">Tahun Terbit</dt><dd class="font-medium">{{ $publication->year }}</dd></div>
-                        <div><dt class="text-slate-500">Jumlah Halaman Romawi</dt><dd class="font-medium">{{ $publication->pages_romawi }}</dd></div>
+                        <div><dt class="text-slate-500">Jumlah Halaman Romawi</dt><dd class="font-medium">{{ \App\Support\RomanNumeral::fromInt($publication->pages_romawi) ?: $publication->pages_romawi }} ({{ $publication->pages_romawi }})</dd></div>
                         <div><dt class="text-slate-500">Jumlah Halaman Arab</dt><dd class="font-medium">{{ $publication->pages_arabic }}</dd></div>
                         <div><dt class="text-slate-500">Kerjasama Instansi Luar</dt><dd class="font-medium">{{ $publication->has_cooperation ? 'Ya' : 'Tidak' }}</dd></div>
                         <div><dt class="text-slate-500">Diterbitkan untuk</dt><dd class="font-medium">{{ $publication->published_for?->label() }}</dd></div>
                         <div><dt class="text-slate-500">Pembuat Cover</dt><dd class="font-medium">{{ $publication->cover_maker?->label() }}</dd></div>
                         <div><dt class="text-slate-500">Orientasi</dt><dd class="font-medium">{{ $publication->orientation?->label() }}</dd></div>
-                        <div><dt class="text-slate-500">Ukuran Kertas</dt><dd class="font-medium">{{ $publication->paper_size }}</dd></div>
+                        <div><dt class="text-slate-500">Ukuran Kertas</dt><dd class="font-medium">{{ \App\Http\Requests\StorePublicationRequest::PAPER_SIZES[$publication->paper_size] ?? $publication->paper_size }}</dd></div>
                     @endif
                 </dl>
             </div>

@@ -31,13 +31,16 @@
 
                 <div class="grid gap-4">
                     @if ($type === \App\Enums\PublicationType::Arc)
-                        <x-field name="arc_publication_id" label="Judul Publikasi (ARC)" required hint="Judul publikasi ARC sudah ditentukan. Pilih dari daftar.">
+                        <x-field name="arc_publication_id" label="Judul Publikasi (ARC)" required hint="Judul publikasi ARC diatur oleh Petugas DLS sesuai tim Anda.">
                             <select name="arc_publication_id" id="arc_publication_id" class="{{ $inputClass }}" required>
                                 <option value="">— Pilih judul publikasi —</option>
                                 @foreach ($arcTitles as $arc)
                                     <option value="{{ $arc->id }}" data-title-en="{{ $arc->title_en }}" @selected(old('arc_publication_id', $publication?->arc_publication_id) == $arc->id)>{{ $arc->title }}</option>
                                 @endforeach
                             </select>
+                            @if ($arcTitles->isEmpty())
+                                <p class="mt-1.5 text-xs text-amber-700">Belum ada judul publikasi ARC yang di-assign ke tim Anda. Hubungi Petugas DLS.</p>
+                            @endif
                         </x-field>
                         <x-field name="title_en_preview" label="Judul Inggris (otomatis)">
                             <input type="text" id="title_en_preview" class="{{ $inputClass }} bg-slate-50" readonly placeholder="Mengikuti judul yang dipilih">
@@ -62,6 +65,15 @@
                             <input type="text" name="release_date" id="release_date" class="{{ $inputClass }}" placeholder="mm/dd/yyyy" value="{{ old('release_date', $publication?->release_date?->format('m/d/Y')) }}" required>
                         </x-field>
                     @else
+                        @php($activeTeam = $publication?->team ?? auth()->user()->team)
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <x-field name="team_name_preview" label="Tim Pembuat Naskah (Otomatis)">
+                                <input type="text" id="team_name_preview" class="{{ $inputClass }} bg-slate-50 text-slate-600" value="{{ $activeTeam?->name ?? '-' }}" readonly>
+                            </x-field>
+                            <x-field name="team_code_preview" label="Kode Tim (Otomatis)">
+                                <input type="text" id="team_code_preview" class="{{ $inputClass }} bg-slate-50 font-mono text-slate-600" value="{{ $activeTeam?->code ?? '-' }}" readonly>
+                            </x-field>
+                        </div>
                         <x-field name="year" label="Tahun Terbit" required>
                             <input type="number" name="year" id="year" class="{{ $inputClass }}" min="1900" max="2100" value="{{ old('year', $publication?->year ?? date('Y')) }}" required>
                         </x-field>
@@ -91,8 +103,37 @@
                             </select>
                         </x-field>
                         <div class="grid gap-4 sm:grid-cols-2">
-                            <x-field name="pages_romawi" label="Jumlah Halaman Romawi" required>
-                                <input type="number" name="pages_romawi" id="pages_romawi" class="{{ $inputClass }}" min="0" value="{{ old('pages_romawi', $publication?->pages_romawi) }}" required>
+                            @php($rawRomawi = old('pages_romawi', $publication?->pages_romawi))
+                            @php($displayRomawi = is_numeric($rawRomawi) ? \App\Support\RomanNumeral::fromInt((int) $rawRomawi) : (string) $rawRomawi)
+                            @php($romanOptions = \App\Support\RomanNumeral::evenUpTo100())
+                            <x-field name="pages_romawi" label="Jumlah Halaman Romawi" required hint="Ketik angka romawi genap (II s.d. C) untuk memilih.">
+                                <div class="relative" id="romawi-combobox">
+                                    <input type="text"
+                                           name="pages_romawi"
+                                           id="pages_romawi"
+                                           class="{{ $inputClass }}"
+                                           value="{{ $displayRomawi }}"
+                                           placeholder="Ketik mis. II, IV, VIII, X..."
+                                           autocomplete="off"
+                                           role="combobox"
+                                           aria-autocomplete="list"
+                                           aria-expanded="false"
+                                           aria-controls="romawi-listbox"
+                                           required>
+                                    <ul id="romawi-listbox"
+                                        role="listbox"
+                                        class="absolute z-20 mt-1 hidden max-h-52 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 text-sm shadow-lg">
+                                        @foreach ($romanOptions as $num => $roman)
+                                            <li role="option"
+                                                data-roman="{{ $roman }}"
+                                                data-number="{{ $num }}"
+                                                class="romawi-option flex cursor-pointer items-center justify-between px-3 py-1.5 text-slate-700 hover:bg-blue-50 hover:text-blue-800">
+                                                <span class="font-semibold">{{ $roman }}</span>
+                                                <span class="text-xs text-slate-400">{{ $num }} halaman</span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
                             </x-field>
                             <x-field name="pages_arabic" label="Jumlah Halaman Arab" required>
                                 <input type="number" name="pages_arabic" id="pages_arabic" class="{{ $inputClass }}" min="1" value="{{ old('pages_arabic', $publication?->pages_arabic) }}" required>
@@ -132,8 +173,8 @@
                             <x-field name="paper_size" label="Ukuran Kertas" required>
                                 <select name="paper_size" class="{{ $inputClass }}" required>
                                     <option value="">— Pilih —</option>
-                                    @foreach (['A4', 'A5', 'B5', 'Letter', 'Legal'] as $paperSize)
-                                        <option value="{{ $paperSize }}" @selected(old('paper_size', $publication?->paper_size) === $paperSize)>{{ $paperSize }}</option>
+                                    @foreach (\App\Http\Requests\StorePublicationRequest::PAPER_SIZES as $sizeKey => $sizeLabel)
+                                        <option value="{{ $sizeKey }}" @selected(old('paper_size', $publication?->paper_size) === $sizeKey)>{{ $sizeLabel }}</option>
                                     @endforeach
                                 </select>
                             </x-field>
@@ -151,7 +192,7 @@
                             Kosongkan jika tidak mengganti file.
                         </p>
                     @endif
-                    <x-field name="file" label="Softcopy Naskah Publikasi (PDF)" :required="! $isEdit" hint="Maksimal 50 MB.">
+                    <x-field name="file" label="Softcopy Naskah Publikasi (PDF)" :required="! $isEdit" hint="Maksimal 30 MB.">
                         <input type="file" name="file" id="file" accept="application/pdf" class="{{ $inputClass }}" @required(! $isEdit)>
                     </x-field>
                     <x-field name="drive_link" label="Link Drive File Mentah Naskah" required hint="Link Google Drive berisi file mentah (docx/excel/referensi) sebelum menjadi PDF.">
@@ -178,5 +219,51 @@
         };
         arcSelect?.addEventListener('change', syncPreview);
         syncPreview();
+
+        const romawiInput = document.getElementById('pages_romawi');
+        const romawiListbox = document.getElementById('romawi-listbox');
+        if (romawiInput && romawiListbox) {
+            const options = Array.from(romawiListbox.querySelectorAll('.romawi-option'));
+
+            const filterRomawi = () => {
+                const query = romawiInput.value.trim().toUpperCase();
+                if (query.length === 0) {
+                    romawiListbox.classList.add('hidden');
+                    romawiInput.setAttribute('aria-expanded', 'false');
+                    return;
+                }
+
+                let visibleCount = 0;
+                options.forEach(opt => {
+                    const roman = opt.dataset.roman || '';
+                    const num = opt.dataset.number || '';
+                    const match = roman.includes(query) || num.startsWith(query);
+                    opt.classList.toggle('hidden', !match);
+                    if (match) visibleCount++;
+                });
+
+                const show = visibleCount > 0;
+                romawiListbox.classList.toggle('hidden', !show);
+                romawiInput.setAttribute('aria-expanded', show ? 'true' : 'false');
+            };
+
+            romawiInput.addEventListener('input', filterRomawi);
+
+            options.forEach(opt => {
+                opt.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    romawiInput.value = opt.dataset.roman || '';
+                    romawiListbox.classList.add('hidden');
+                    romawiInput.setAttribute('aria-expanded', 'false');
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!document.getElementById('romawi-combobox')?.contains(e.target)) {
+                    romawiListbox.classList.add('hidden');
+                    romawiInput.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
     </script>
 @endsection

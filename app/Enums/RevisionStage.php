@@ -21,8 +21,7 @@ enum RevisionStage: string
     {
         return match ($this) {
             self::KetuaTim => PublicationStatus::Diajukan,
-            self::Dls => PublicationStatus::ReviewDls,
-            self::KetuaDls => PublicationStatus::ReviewAkhir,
+            self::Dls, self::KetuaDls => PublicationStatus::ReviewDls,
         };
     }
 }

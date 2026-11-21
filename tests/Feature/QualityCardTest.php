@@ -32,9 +32,8 @@ class QualityCardTest extends TestCase
 
         $answers = [];
         foreach ($items as $item) {
-            $answers[$item->id] = ['status' => ChecklistStatus::Sesuai->value, 'note' => null];
+            $answers[$item->id] = ['status' => ChecklistStatus::Sesuai->value];
         }
-        $answers[$items[0]->id] = ['status' => ChecklistStatus::TidakRelevan->value, 'note' => 'Tidak berlaku untuk publikasi ini.'];
 
         $this->actingAs($ketuaTim)->post(route('quality-cards.store', $publication), ['answers' => $answers])
             ->assertRedirect(route('publications.show', $publication));
@@ -50,8 +49,8 @@ class QualityCardTest extends TestCase
         $this->assertDatabaseHas('quality_card_answers', [
             'quality_card_id' => $card->id,
             'checklist_item_id' => $items[0]->id,
-            'status' => ChecklistStatus::TidakRelevan->value,
-            'note' => 'Tidak berlaku untuk publikasi ini.',
+            'status' => ChecklistStatus::Sesuai->value,
+            'note' => null,
         ]);
         $this->assertDatabaseMissing('quality_card_answers', [
             'quality_card_id' => $card->id,

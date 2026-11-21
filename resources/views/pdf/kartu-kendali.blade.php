@@ -92,17 +92,10 @@
                         <td class="no">{{ $item->number }}</td>
                         <td>
                             {!! nl2br(e($item->content)) !!}
-                            @if ($answer?->note)
-                                <br><em>Catatan: {{ $answer->note }}</em>
-                            @endif
                         </td>
                         <td class="check">
                             @if ($answer?->status === \App\Enums\ChecklistStatus::Sesuai)
                                 ✓
-                            @elseif ($answer?->status === \App\Enums\ChecklistStatus::TidakSesuai)
-                                ✗
-                            @else
-                                –
                             @endif
                         </td>
                     </tr>
@@ -111,7 +104,7 @@
         </tbody>
     </table>
 
-    <p class="legend">Keterangan: ✓ = Sesuai &nbsp;&nbsp; ✗ = Tidak Sesuai &nbsp;&nbsp; – = Tidak Relevan</p>
+    <p class="legend">Keterangan: ✓ = Telah diperiksa dan sesuai</p>
 
     <p class="catatan">
         Kartu kendali ini diisi dan disetujui oleh Ketua Tim {{ $card->ketuaTim->name }}

@@ -231,17 +231,159 @@ class UserManagementTest extends TestCase
         $this->assertDatabaseCount('checklist_items', 0);
     }
 
-    public function test_checklist_item_used_on_quality_card_cannot_be_deleted(): void
+    public function test_checklist_item_used_on_quality_card_can_be_force_deleted(): void
     {
         $petugas = User::factory()->petugasDls()->create();
         $item = ChecklistItem::factory()->create();
-        QualityCardAnswer::factory()->create(['checklist_item_id' => $item->id]);
+        $answer = QualityCardAnswer::factory()->create(['checklist_item_id' => $item->id]);
 
         $this->actingAs($petugas)->delete(route('checklist-items.destroy', $item))
             ->assertRedirect(route('checklist-items.index'))
-            ->assertSessionHas('error');
+            ->assertSessionHas('success');
 
-        $this->assertDatabaseHas('checklist_items', ['id' => $item->id]);
+        $this->assertDatabaseMissing('checklist_items', ['id' => $item->id]);
+        $this->assertDatabaseMissing('quality_card_answers', ['id' => $answer->id]);
+    }
+
+    public function test_petugas_dls_manages_checklist_sections(): void
+    {
+        $petugas = User::factory()->petugasDls()->create();
+
+        $this->actingAs($petugas)->post(route('checklist-sections.store'), [
+            'position' => 8,
+            'name' => 'PEMANFAATAN ADOBE',
+        ])->assertRedirect(route('checklist-items.index'));
+
+        $section = ChecklistSection::where('name', 'PEMANFAATAN ADOBE')->firstOrFail();
+        $this->assertSame(8, $section->position);
+
+        $this->actingAs($petugas)->put(route('checklist-sections.update', $section), [
+            'position' => 9,
+            'name' => 'PEMANFAATAN ADOBE INDESIGN',
+        ])->assertRedirect(route('checklist-items.index'));
+
+        $section->refresh();
+        $this->assertSame(9, $section->position);
+        $this->assertSame('PEMANFAATAN ADOBE INDESIGN', $section->name);
+
+        $item = ChecklistItem::factory()->create(['checklist_section_id' => $section->id]);
+        $answer = QualityCardAnswer::factory()->create(['checklist_item_id' => $item->id]);
+
+        $this->actingAs($petugas)->delete(route('checklist-sections.destroy', $section))
+            ->assertRedirect(route('checklist-items.index'));
+
+        $this->assertDatabaseMissing('checklist_sections', ['id' => $section->id]);
+        $this->assertDatabaseMissing('checklist_items', ['id' => $item->id]);
+        $this->assertDatabaseMissing('quality_card_answers', ['id' => $answer->id]);
+    }
+
+    public function test_petugas_dls_can_update_team_change_ketua_tim_assign_exclusive_arc_titles_and_delete_team(): void
+    {
+        $petugas = User::factory()->petugasDls()->create();
+        [$teamA, $ketuaA, $memberA] = $this->makeTeam();
+        [$teamB, $ketuaB] = $this->makeTeam();
+        $arc1 = ArcPublication::factory()->create();
+        $arc2 = ArcPublication::factory()->create();
+
+        $this->actingAs($petugas)->put(route('teams.update', $teamA), [
+            'code' => 'EKO',
+            'name' => 'Tim Ekonomi & Pertanian',
+            'ketua_tim_email' => 'ketua.baru@gmail.com',
+            'arc_publication_ids' => [$arc1->id],
+            'sync_arc' => '1',
+        ])->assertRedirect(route('teams.index'));
+
+        $teamA->refresh();
+        $this->assertSame('EKO', $teamA->code);
+        $this->assertSame('Tim Ekonomi & Pertanian', $teamA->name);
+        $this->assertSame('ketua.baru@gmail.com', $teamA->ketuaTim->email);
+        $this->assertNull($ketuaA->fresh()->team_id);
+        $this->assertSame($teamA->id, $arc1->fresh()->team_id);
+
+        // Tim B tidak bisa mengambil judul ARC yang sudah di-assign ke Tim A
+        $this->actingAs($petugas)->put(route('teams.update', $teamB), [
+            'code' => 'SOS',
+            'name' => $teamB->name,
+            'ketua_tim_email' => $ketuaB->email,
+            'arc_publication_ids' => [$arc1->id, $arc2->id],
+            'sync_arc' => '1',
+        ])->assertSessionHasErrors('arc_publication_ids.0');
+
+        $this->assertSame($teamA->id, $arc1->fresh()->team_id);
+
+        // Hapus Tim A
+        $this->actingAs($petugas)->delete(route('teams.destroy', $teamA))
+            ->assertRedirect(route('teams.index'));
+
+        $this->assertDatabaseMissing('teams', ['id' => $teamA->id]);
+        $this->assertNull($memberA->fresh()->team_id);
+        $this->assertNull($arc1->fresh()->team_id);
+    }
+
+    public function test_petugas_dls_can_edit_team_members_table_and_auto_fills_team_code(): void
+    {
+        $petugas = User::factory()->petugasDls()->create();
+        [$team, $ketua, $member] = $this->makeTeam();
+        $team->update(['code' => null]);
+
+        // Membuka halaman edit tim otomatis mengisi kode tim jika sebelumnya kosong
+        $this->actingAs($petugas)->get(route('teams.edit', $team))->assertOk();
+        $this->assertNotNull($team->fresh()->code);
+
+        // Edit tabel anggota tim: ubah role member jadi ketua_tim, ketua lama jadi tim_naskah, tambah anggota baru
+        $this->actingAs($petugas)->put(route('teams.update', $team), [
+            'code' => 'TIM-SOS-01',
+            'name' => 'Tim Statistik Sosial',
+            'sync_members' => '1',
+            'sync_arc' => '1',
+            'members' => [
+                [
+                    'id' => $ketua->id,
+                    'email' => $ketua->email,
+                    'name' => 'Eks Ketua Tim',
+                    'role' => 'tim_naskah',
+                    'nip' => '19800101',
+                    'jabatan' => 'Statistisi Ahli Muda',
+                    'phone' => '0811111111',
+                ],
+                [
+                    'id' => $member->id,
+                    'email' => 'ketua.promosi@gmail.com',
+                    'name' => 'Ketua Baru Promosi',
+                    'role' => 'ketua_tim',
+                    'nip' => '19900202',
+                    'jabatan' => 'Statistisi Ahli Madya',
+                    'phone' => '0822222222',
+                ],
+                [
+                    'id' => '',
+                    'email' => 'anggota.tambahan@gmail.com',
+                    'name' => 'Anggota Tambahan',
+                    'role' => 'tim_naskah',
+                    'nip' => '19950303',
+                    'jabatan' => 'Statistisi Pertama',
+                    'phone' => '0833333333',
+                ],
+            ],
+        ])->assertRedirect(route('teams.index'));
+
+        $team->refresh();
+        $this->assertSame('TIM-SOS-01', $team->code);
+        $this->assertSame($member->id, $team->ketua_tim_id);
+
+        $ketua->refresh();
+        $this->assertSame(Role::TimNaskah, $ketua->role);
+        $this->assertSame('19800101', $ketua->nip);
+
+        $member->refresh();
+        $this->assertSame(Role::KetuaTim, $member->role);
+        $this->assertSame('ketua.promosi@gmail.com', $member->email);
+        $this->assertSame('Ketua Baru Promosi', $member->name);
+        $this->assertSame('Statistisi Ahli Madya', $member->jabatan);
+
+        $added = User::where('email', 'anggota.tambahan@gmail.com')->firstOrFail();
+        $this->assertSame($team->id, $added->team_id);
+        $this->assertSame(Role::TimNaskah, $added->role);
     }
 
     public function test_petugas_dls_manages_arc_titles(): void

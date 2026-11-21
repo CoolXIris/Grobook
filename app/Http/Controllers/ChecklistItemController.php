@@ -19,10 +19,14 @@ class ChecklistItemController extends Controller
         return view('checklist.index', ['sections' => $sections]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         return view('checklist.form', [
-            'item' => new ChecklistItem(['number' => (int) ChecklistItem::max('number') + 1, 'is_active' => true]),
+            'item' => new ChecklistItem([
+                'checklist_section_id' => $request->integer('section') ?: null,
+                'number' => (int) ChecklistItem::max('number') + 1,
+                'is_active' => true,
+            ]),
             'sections' => ChecklistSection::orderBy('position')->get(),
         ]);
     }
@@ -53,11 +57,10 @@ class ChecklistItemController extends Controller
 
     public function destroy(ChecklistItem $checklistItem): RedirectResponse
     {
-        if ($checklistItem->answers()->exists()) {
-            return redirect()->route('checklist-items.index')->with('error', 'Butir sudah pernah dipakai pada kartu kendali sehingga tidak dapat dihapus. Nonaktifkan saja agar tidak muncul pada kartu kendali baru.');
-        }
-
-        $checklistItem->delete();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($checklistItem) {
+            $checklistItem->answers()->delete();
+            $checklistItem->delete();
+        });
 
         return redirect()->route('checklist-items.index')->with('success', 'Butir pemeriksaan berhasil dihapus.');
     }

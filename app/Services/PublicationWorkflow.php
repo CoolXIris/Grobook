@@ -59,7 +59,7 @@ class PublicationWorkflow
                 $card->answers()->create([
                     'checklist_item_id' => $itemId,
                     'status' => $answer['status'],
-                    'note' => $answer['note'] ?? null,
+                    'note' => null,
                 ]);
             }
 

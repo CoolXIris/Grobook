@@ -10,13 +10,18 @@
 <body class="min-h-screen bg-slate-50 font-sans text-slate-800 antialiased">
     <div class="flex min-h-screen">
         <aside class="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-[#032860] bg-[#043277] text-white lg:flex">
-            <div class="flex items-center gap-3 border-b border-[#032860] px-5 py-4">
-                <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white/10 p-1.5 ring-1 ring-white/15">
-                    <img src="{{ asset('img/logo_bps.svg') }}" alt="Logo BPS" class="size-full object-contain">
+            <div class="flex items-center gap-3.5 border-b border-[#032860] px-5 py-4">
+                <div class="flex items-center gap-2.5 shrink-0">
+                    <img src="{{ asset('img/pst_transparent.png') }}" alt="Logo PST" class="h-9 w-auto object-contain filter drop-shadow-sm">
+                    <div class="h-6 w-px bg-white/20"></div>
+                    <img src="{{ asset('img/logo_bps.svg') }}" alt="Logo BPS" class="size-8 object-contain">
                 </div>
                 <div class="min-w-0">
-                    <p class="text-base font-bold tracking-tight text-white">Grobook</p>
-                    <p class="truncate text-[11px] text-blue-200/80">Publikasi BPS Prov. Sumatera Selatan</p>
+                    <p class="text-base font-bold tracking-tight text-white leading-tight">Grobook</p>
+                    <p class="mt-0.5 text-[11px] leading-tight text-blue-200/80">
+                        Publikasi BPS Prov.<br>
+                        <span class="text-blue-100 font-medium">Sumatera Selatan</span>
+                    </p>
                 </div>
             </div>
             <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4 text-sm">
@@ -60,8 +65,10 @@
                         <button type="button" id="sidebar-toggle" class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" aria-label="Buka menu">
                             <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                         </button>
-                        <div class="flex items-center gap-2.5">
-                            <img src="{{ asset('img/logo_bps.svg') }}" alt="Logo BPS" class="size-7 object-contain lg:hidden">
+                        <div class="flex items-center gap-2">
+                            <img src="{{ asset('img/pst_transparent.png') }}" alt="Logo PST" class="h-7 w-auto object-contain lg:hidden">
+                            <div class="h-4 w-px bg-slate-200 lg:hidden"></div>
+                            <img src="{{ asset('img/logo_bps.svg') }}" alt="Logo BPS" class="size-6 object-contain lg:hidden">
                             <div>
                                 <p class="text-sm font-bold text-slate-900 lg:hidden">Grobook</p>
                                 <h1 class="hidden text-base font-semibold tracking-tight text-slate-900 lg:block">@yield('title', 'Dashboard')</h1>

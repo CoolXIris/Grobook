@@ -33,15 +33,40 @@ class AuthTest extends TestCase
         $response->assertRedirectContains('accounts.google.com');
     }
 
-    public function test_callback_creates_new_user_as_tim_naskah(): void
+    public function test_callback_rejects_unregistered_google_account(): void
     {
         Socialite::shouldReceive('driver->user')->once()->andReturn($this->googleUser('baru@gmail.com'));
 
+        $this->get(route('auth.google.callback'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('google');
+
+        $this->assertDatabaseMissing('users', ['email' => 'baru@gmail.com']);
+        $this->assertGuest();
+    }
+
+    public function test_callback_rejects_tim_naskah_without_team(): void
+    {
+        User::factory()->create(['email' => 'tanpa.tim@gmail.com', 'role' => Role::TimNaskah, 'team_id' => null]);
+
+        Socialite::shouldReceive('driver->user')->once()->andReturn($this->googleUser('tanpa.tim@gmail.com'));
+
+        $this->get(route('auth.google.callback'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('google');
+
+        $this->assertGuest();
+    }
+
+    public function test_callback_allows_registered_tim_naskah_with_team(): void
+    {
+        $user = User::factory()->inTeam()->create(['email' => 'anggota.tim@gmail.com']);
+
+        Socialite::shouldReceive('driver->user')->once()->andReturn($this->googleUser('anggota.tim@gmail.com'));
+
         $this->get(route('auth.google.callback'))->assertRedirect(route('dashboard'));
 
-        $user = User::where('email', 'baru@gmail.com')->firstOrFail();
-        $this->assertSame(Role::TimNaskah, $user->role);
-        $this->assertSame('google-123', $user->google_id);
+        $this->assertSame('google-123', $user->fresh()->google_id);
         $this->assertAuthenticatedAs($user);
     }
 

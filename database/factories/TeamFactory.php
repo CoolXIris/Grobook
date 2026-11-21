@@ -14,6 +14,7 @@ class TeamFactory extends Factory
     public function definition(): array
     {
         return [
+            'code' => 'TIM-'.fake()->unique()->numerify('###'),
             'name' => 'Tim '.fake()->unique()->words(2, true),
             'ketua_tim_id' => User::factory()->ketuaTim(),
         ];

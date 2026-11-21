@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'ketua_tim_id'])]
+#[Fillable(['code', 'name', 'ketua_tim_id'])]
 class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */
@@ -28,5 +28,10 @@ class Team extends Model
     public function publications(): HasMany
     {
         return $this->hasMany(Publication::class);
+    }
+
+    public function arcPublications(): HasMany
+    {
+        return $this->hasMany(ArcPublication::class);
     }
 }

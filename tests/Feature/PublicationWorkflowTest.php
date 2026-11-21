@@ -26,7 +26,7 @@ class PublicationWorkflowTest extends TestCase
         [, $ketuaTim, $author] = $this->makeTeam();
         $petugas = User::factory()->petugasDls()->create();
         $ketuaDls = User::factory()->ketuaDls()->create();
-        $arc = ArcPublication::factory()->create();
+        $arc = ArcPublication::factory()->create(['team_id' => $author->team_id]);
         $items = ChecklistItem::factory()->count(2)->create();
 
         $this->actingAs($author)->post(route('publications.store'), $this->arcPayload($arc));
@@ -111,12 +111,13 @@ class PublicationWorkflowTest extends TestCase
         $this->assertNull($revision->file_path);
     }
 
-    public function test_ketua_dls_revision_returns_to_final_review_after_resubmit(): void
+    public function test_ketua_dls_revision_returns_to_dls_review_after_resubmit(): void
     {
         Storage::fake('local');
         [, , $author] = $this->makeTeam();
+        $petugas = User::factory()->petugasDls()->create();
         $ketuaDls = User::factory()->ketuaDls()->create();
-        $arc = ArcPublication::factory()->create();
+        $arc = ArcPublication::factory()->create(['team_id' => $author->team_id]);
         $publication = Publication::factory()->status(PublicationStatus::ReviewAkhir)->create([
             'user_id' => $author->id,
             'team_id' => $author->team_id,
@@ -130,6 +131,9 @@ class PublicationWorkflowTest extends TestCase
         $this->assertSame(PublicationStatus::RevisiKetuaDls, $publication->fresh()->status);
 
         $this->actingAs($author)->put(route('publications.update', $publication), $this->arcPayload($arc));
+        $this->assertSame(PublicationStatus::ReviewDls, $publication->fresh()->status);
+
+        $this->actingAs($petugas)->post(route('reviews.dls.forward', $publication));
         $this->assertSame(PublicationStatus::ReviewAkhir, $publication->fresh()->status);
     }
 

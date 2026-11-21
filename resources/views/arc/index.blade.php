@@ -14,6 +14,7 @@
                 <tr>
                     <th class="px-4 py-3">Judul (Indonesia)</th>
                     <th class="px-4 py-3">Judul (Inggris)</th>
+                    <th class="px-4 py-3">Tim</th>
                     <th class="px-4 py-3 w-24">Status</th>
                     <th class="px-4 py-3 w-36"></th>
                 </tr>
@@ -23,6 +24,7 @@
                     <tr class="hover:bg-slate-50 {{ $arc->is_active ? '' : 'opacity-60' }}">
                         <td class="px-4 py-3 font-medium text-slate-800">{{ $arc->title }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $arc->title_en }}</td>
+                        <td class="px-4 py-3 text-slate-600">{{ $arc->team?->name ?? '—' }}</td>
                         <td class="px-4 py-3">
                             <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold {{ $arc->is_active ? 'bg-green-100 text-green-800' : 'bg-slate-200 text-slate-600' }}">{{ $arc->is_active ? 'Aktif' : 'Nonaktif' }}</span>
                         </td>
@@ -36,7 +38,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">Belum ada judul publikasi ARC. Tambahkan judul sesuai daftar resmi.</td></tr>
+                    <tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">Belum ada judul publikasi ARC. Tambahkan judul sesuai daftar resmi.</td></tr>
                 @endforelse
             </tbody>
         </table>
