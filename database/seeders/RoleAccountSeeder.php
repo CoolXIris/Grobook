@@ -36,5 +36,9 @@ class RoleAccountSeeder extends Seeder
         }
 
         $ketuaTim->update(['team_id' => $team->id]);
+        $ketuaDls->update([
+            'team_id' => $team->id,
+            'roles' => array_map(fn (Role $r) => $r->value, Role::cases()),
+        ]);
     }
 }

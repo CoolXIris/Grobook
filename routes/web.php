@@ -14,6 +14,7 @@ use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\PublicationController;
 use App\Http\Controllers\QualityCardController;
 use App\Http\Controllers\RevisionController;
+use App\Http\Controllers\RoleSwitchController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\UserController;
@@ -30,6 +31,7 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::middleware('auth')->group(function () {
+    Route::post('/ganti-role', RoleSwitchController::class)->name('role.switch');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/publikasi', [PublicationController::class, 'index'])->name('publications.index');
     Route::get('/publikasi/{publication}', [PublicationController::class, 'show'])->name('publications.show');

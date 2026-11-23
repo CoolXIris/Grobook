@@ -16,7 +16,10 @@ use Illuminate\Support\Facades\DB;
 
 class PublicationWorkflow
 {
-    public function __construct(private KartuKendaliGenerator $kartuKendali) {}
+    public function __construct(
+        private KartuKendaliGenerator $kartuKendali,
+        private DocumentStorage $documentStorage,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $attributes
@@ -86,8 +89,9 @@ class PublicationWorkflow
             $originalName = null;
 
             if ($file !== null) {
-                $filePath = $file->store('revisions/'.$publication->id, 'local');
                 $originalName = $file->getClientOriginalName();
+                $driveFileName = ($publication->number ?? 'PUB-'.$publication->id).'-revisi-'.$originalName;
+                $filePath = $this->documentStorage->storeUploadedPdf($file, 'revisions/'.$publication->id, $driveFileName);
             }
 
             $revision = Revision::create([
@@ -168,11 +172,14 @@ class PublicationWorkflow
 
     private function storeFile(Publication $publication, UploadedFile $file, string $driveLink, User $user, int $version): PublicationFile
     {
+        $originalName = $file->getClientOriginalName();
+        $driveFileName = ($publication->number ?? 'PUB-'.$publication->id).'-v'.$version.'-'.$originalName;
+
         return PublicationFile::create([
             'publication_id' => $publication->id,
             'version' => $version,
-            'file_path' => $file->store('publications/'.$publication->id, 'local'),
-            'original_name' => $file->getClientOriginalName(),
+            'file_path' => $this->documentStorage->storeUploadedPdf($file, 'publications/'.$publication->id, $driveFileName),
+            'original_name' => $originalName,
             'drive_link' => $driveLink,
             'uploaded_by' => $user->id,
         ]);

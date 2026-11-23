@@ -24,24 +24,40 @@
                 </x-field>
             @endif
 
-            <x-field name="role" label="Role" required>
-                <select id="role" name="role" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" required>
-                    @foreach (\App\Enums\Role::cases() as $role)
-                        <option value="{{ $role->value }}" @selected(old('role', $user->role?->value) === $role->value)>{{ $role->label() }}</option>
+            @php($selectedRoles = old('roles', array_map(fn (\App\Enums\Role $r) => $r->value, $user->assignedRoles())))
+            <x-field name="role" label="Role Akun (Multirole)" required hint="Centang satu atau lebih role yang diizinkan untuk akun ini. Ketua DLS bertindak sebagai Super Admin dan otomatis dapat mengakses seluruh role.">
+                <div class="mt-1 grid gap-2 sm:grid-cols-2">
+                    @foreach (\App\Enums\Role::cases() as $roleOption)
+                        <label class="flex cursor-pointer items-start gap-2.5 rounded-lg border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm transition hover:border-blue-300 hover:bg-white">
+                            <input type="checkbox"
+                                   name="roles[]"
+                                   value="{{ $roleOption->value }}"
+                                   class="role-checkbox mt-0.5 size-4 rounded border-slate-300"
+                                   @checked(in_array($roleOption->value, (array) $selectedRoles, true))>
+                            <div>
+                                <p class="font-medium text-slate-800">{{ $roleOption->label() }}</p>
+                                @if ($roleOption === \App\Enums\Role::KetuaDls)
+                                    <p class="text-[11px] text-blue-700">Super Admin (bisa semua role)</p>
+                                @endif
+                            </div>
+                        </label>
+                    @endforeach
+                </div>
+                @error('roles')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
+            </x-field>
+
+            <x-field name="team_id" label="Tim" hint="Digunakan apabila akun memiliki role Tim Pembuat Naskah atau Ketua Tim.">
+                <select id="team_id" name="team_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <option value="">— Tanpa tim —</option>
+                    @foreach ($teams as $team)
+                        <option value="{{ $team->id }}" @selected(old('team_id', $user->team_id) == $team->id)>{{ $team->name }}</option>
                     @endforeach
                 </select>
             </x-field>
 
             @if ($user->exists)
-                <x-field name="team_id" label="Tim" hint="Hanya berlaku untuk role Tim Pembuat Naskah.">
-                    <select id="team_id" name="team_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                        <option value="">— Tanpa tim —</option>
-                        @foreach ($teams as $team)
-                            <option value="{{ $team->id }}" @selected(old('team_id', $user->team_id) == $team->id)>{{ $team->name }}</option>
-                        @endforeach
-                    </select>
-                </x-field>
-
                 <div class="grid gap-4 sm:grid-cols-2">
                     <x-field name="nip" label="NIP">
                         <input type="text" id="nip" name="nip" value="{{ old('nip', $user->nip) }}" maxlength="30" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
@@ -62,4 +78,15 @@
             </div>
         </form>
     </div>
+
+    <script>
+        const roleCheckboxes = Array.from(document.querySelectorAll('.role-checkbox'));
+        const ketuaDlsCheckbox = roleCheckboxes.find(cb => cb.value === 'ketua_dls');
+
+        ketuaDlsCheckbox?.addEventListener('change', () => {
+            if (ketuaDlsCheckbox.checked) {
+                roleCheckboxes.forEach(cb => cb.checked = true);
+            }
+        });
+    </script>
 @endsection

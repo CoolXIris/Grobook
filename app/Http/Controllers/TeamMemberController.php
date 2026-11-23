@@ -12,7 +12,7 @@ class TeamMemberController extends Controller
 {
     public function index(Request $request): View|RedirectResponse
     {
-        $team = $request->user()->ledTeam;
+        $team = $request->user()->ledTeam ?? $request->user()->team;
 
         if ($team === null) {
             return redirect()->route('dashboard')->with('error', 'Anda belum memiliki tim. Hubungi Petugas DLS untuk mendaftarkan tim Anda.');
@@ -25,7 +25,7 @@ class TeamMemberController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $team = $request->user()->ledTeam;
+        $team = $request->user()->ledTeam ?? $request->user()->team;
         abort_if($team === null, 403, 'Anda belum memiliki tim.');
 
         $data = $request->validate([
@@ -61,7 +61,7 @@ class TeamMemberController extends Controller
 
     public function destroy(Request $request, User $user): RedirectResponse
     {
-        $team = $request->user()->ledTeam;
+        $team = $request->user()->ledTeam ?? $request->user()->team;
         abort_if($team === null || $user->team_id !== $team->id || $user->role !== Role::TimNaskah, 403);
 
         $user->update(['team_id' => null]);

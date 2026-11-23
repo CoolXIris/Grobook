@@ -199,6 +199,67 @@ class PublicationWorkflowTest extends TestCase
         $this->actingAs($petugas)->get(route('documents.download', $publication))->assertForbidden();
     }
 
+    public function test_pdfs_are_stored_and_served_from_google_drive_when_oauth_token_is_present(): void
+    {
+        \Illuminate\Support\Facades\Http::fake([
+            'https://www.googleapis.com/drive/v3/files*' => \Illuminate\Support\Facades\Http::sequence()
+                ->push(['files' => [['id' => 'folder-root', 'name' => 'Grobook BPS Sumsel']]], 200)
+                ->push(['files' => [['id' => 'folder-pub', 'name' => 'publications']]], 200)
+                ->push(['id' => 'folder-root', 'trashed' => false], 200)
+                ->push(['files' => [['id' => 'folder-kk', 'name' => 'kartu-kendali']]], 200)
+                ->push(['id' => 'folder-root', 'trashed' => false], 200)
+                ->push(['files' => [['id' => 'folder-rev', 'name' => 'revisions']]], 200)
+                ->push('%PDF-1.4 drive-pdf-content', 200)
+                ->push('%PDF-1.4 drive-pdf-content', 200)
+                ->push('%PDF-1.4 drive-kk-content', 200),
+            'https://www.googleapis.com/upload/drive/v3/files*' => \Illuminate\Support\Facades\Http::sequence()
+                ->push(['id' => 'gdrive-file-pub-1'], 200)
+                ->push(['id' => 'gdrive-file-kk-1'], 200)
+                ->push(['id' => 'gdrive-file-rev-1'], 200),
+        ]);
+
+        [, $ketuaTim, $author] = $this->makeTeam();
+        $petugas = User::factory()->petugasDls()->create();
+        $ketuaDls = User::factory()->ketuaDls()->create([
+            'google_access_token' => 'ya29.valid-admin-token',
+            'google_token_expires_at' => now()->addHour(),
+        ]);
+        $arc = ArcPublication::factory()->create(['team_id' => $author->team_id]);
+        $item = ChecklistItem::factory()->create();
+
+        // 1. Upload PDF Naskah -> tersimpan ke Google Drive
+        $this->actingAs($author)->post(route('publications.store'), $this->arcPayload($arc));
+        $publication = Publication::firstOrFail();
+        $pubFile = $publication->files()->firstOrFail();
+        $this->assertSame('gdrive:gdrive-file-pub-1', $pubFile->file_path);
+
+        // 2. Generate PDF Kartu Kendali -> tersimpan ke Google Drive
+        $this->actingAs($ketuaTim)->post(route('quality-cards.store', $publication), [
+            'answers' => [$item->id => ['status' => 'sesuai']],
+        ]);
+        $card = $publication->qualityCards()->firstOrFail();
+        $this->assertSame('gdrive:gdrive-file-kk-1', $card->pdf_path);
+
+        // 3. Upload PDF Detail Revisi -> tersimpan ke Google Drive
+        $this->actingAs($petugas)->post(route('revisions.store', $publication), [
+            'comment' => 'Revisi via Google Drive.',
+            'file' => $this->pdfUpload('revisi.pdf'),
+        ]);
+        $revision = $publication->revisions()->firstOrFail();
+        $this->assertSame('gdrive:gdrive-file-rev-1', $revision->file_path);
+
+        // 4. Buka file PDF dari Google Drive lewat FileController
+        $this->actingAs($author)->get(route('files.publication', $pubFile))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+
+        // 5. Unduh paket ZIP dari Google Drive saat publikasi selesai
+        $publication->update(['status' => PublicationStatus::Selesai, 'completed_at' => now()]);
+        $this->actingAs($petugas)->get(route('documents.download', $publication))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/zip');
+    }
+
     /**
      * @return array<string, mixed>
      */

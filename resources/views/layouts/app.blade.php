@@ -76,9 +76,26 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <div class="hidden text-right sm:block">
+                        <div class="text-right">
                             <p class="text-sm font-semibold text-slate-800">{{ auth()->user()->name }}</p>
-                            <p class="text-xs text-slate-500">{{ auth()->user()->role->label() }}</p>
+                            @php($availableRoles = auth()->user()->assignedRoles())
+                            @if (count($availableRoles) > 1)
+                                <form method="POST" action="{{ route('role.switch') }}" class="mt-0.5 inline-block">
+                                    @csrf
+                                    <select name="role"
+                                            aria-label="Ganti Role Aktif"
+                                            onchange="this.form.submit()"
+                                            class="cursor-pointer rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700 transition hover:border-blue-300 hover:bg-blue-50/50 focus:border-blue-500 focus:outline-none">
+                                        @foreach ($availableRoles as $roleOption)
+                                            <option value="{{ $roleOption->value }}" @selected(auth()->user()->role === $roleOption)>
+                                                {{ $roleOption->label() }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </form>
+                            @else
+                                <p class="text-xs text-slate-500">{{ auth()->user()->role->label() }}</p>
+                            @endif
                         </div>
                         @if (auth()->user()->avatar)
                             <img src="{{ auth()->user()->avatar }}" alt="" class="size-8 rounded-full ring-1 ring-slate-200" referrerpolicy="no-referrer">

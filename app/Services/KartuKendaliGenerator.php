@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Storage;
 
 class KartuKendaliGenerator
 {
+    public function __construct(private DocumentStorage $documentStorage) {}
+
     public function generate(QualityCard $card): string
     {
         $card->load([
@@ -81,9 +83,14 @@ class KartuKendaliGenerator
             'progres' => $progres,
         ])->setPaper('a4');
 
-        $path = 'kartu-kendali/'.$publication->number.'-v'.$card->id.'.pdf';
-        Storage::disk('local')->put($path, $pdf->output());
+        $fileName = $publication->number.'-v'.$card->id.'.pdf';
+        $localFallbackPath = 'kartu-kendali/'.$fileName;
 
-        return $path;
+        return $this->documentStorage->storePdfBytes(
+            $pdf->output(),
+            'kartu-kendali',
+            $fileName,
+            $localFallbackPath,
+        );
     }
 }

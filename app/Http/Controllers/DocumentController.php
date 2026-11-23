@@ -4,15 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Enums\PublicationStatus;
 use App\Models\Publication;
+use App\Services\DocumentStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use ZipArchive;
 
 class DocumentController extends Controller
 {
+    public function __construct(private DocumentStorage $documentStorage) {}
+
     public function index(): View
     {
         $publications = Publication::withStatus(PublicationStatus::Selesai)
@@ -30,24 +32,30 @@ class DocumentController extends Controller
 
         $publication->load(['latestFile', 'latestQualityCard']);
 
-        $files = [];
+        $fileContents = [];
 
-        if ($publication->latestFile !== null && Storage::disk('local')->exists($publication->latestFile->file_path)) {
-            $files['Naskah Final - '.$publication->number.'.pdf'] = Storage::disk('local')->path($publication->latestFile->file_path);
+        if ($publication->latestFile !== null) {
+            $content = $this->documentStorage->getContents($publication->latestFile->file_path);
+            if ($content !== null) {
+                $fileContents['Naskah Final - '.$publication->number.'.pdf'] = $content;
+            }
         }
 
-        if ($publication->latestQualityCard?->pdf_path !== null && Storage::disk('local')->exists($publication->latestQualityCard->pdf_path)) {
-            $files['Kartu Kendali - '.$publication->number.'.pdf'] = Storage::disk('local')->path($publication->latestQualityCard->pdf_path);
+        if ($publication->latestQualityCard?->pdf_path !== null) {
+            $content = $this->documentStorage->getContents($publication->latestQualityCard->pdf_path);
+            if ($content !== null) {
+                $fileContents['Kartu Kendali - '.$publication->number.'.pdf'] = $content;
+            }
         }
 
-        abort_if($files === [], 404, 'Dokumen final tidak ditemukan.');
+        abort_if($fileContents === [], 404, 'Dokumen final tidak ditemukan.');
 
         $zipPath = tempnam(sys_get_temp_dir(), 'grobook-').'.zip';
         $zip = new ZipArchive;
         $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
-        foreach ($files as $name => $path) {
-            $zip->addFile($path, $name);
+        foreach ($fileContents as $name => $bytes) {
+            $zip->addFromString($name, $bytes);
         }
 
         $zip->close();

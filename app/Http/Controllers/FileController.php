@@ -5,20 +5,24 @@ namespace App\Http\Controllers;
 use App\Models\PublicationFile;
 use App\Models\QualityCard;
 use App\Models\Revision;
+use App\Services\DocumentStorage;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class FileController extends Controller
 {
-    public function publicationFile(PublicationFile $publicationFile): BinaryFileResponse
+    public function __construct(private DocumentStorage $documentStorage) {}
+
+    public function publicationFile(PublicationFile $publicationFile): BinaryFileResponse|Response
     {
         Gate::authorize('view', $publicationFile->publication);
 
         return $this->serve($publicationFile->file_path, $publicationFile->original_name);
     }
 
-    public function revisionFile(Revision $revision): BinaryFileResponse
+    public function revisionFile(Revision $revision): BinaryFileResponse|Response
     {
         Gate::authorize('view', $revision->publication);
 
@@ -27,7 +31,7 @@ class FileController extends Controller
         return $this->serve($revision->file_path, $revision->original_name ?? 'detail-revisi.pdf');
     }
 
-    public function qualityCard(QualityCard $qualityCard): BinaryFileResponse
+    public function qualityCard(QualityCard $qualityCard): BinaryFileResponse|Response
     {
         Gate::authorize('view', $qualityCard->publication);
 
@@ -36,8 +40,18 @@ class FileController extends Controller
         return $this->serve($qualityCard->pdf_path, 'Kartu Kendali '.$qualityCard->publication->number.'.pdf');
     }
 
-    private function serve(string $path, string $name): BinaryFileResponse
+    private function serve(string $path, string $name): BinaryFileResponse|Response
     {
+        if ($this->documentStorage->isGoogleDrivePath($path)) {
+            $contents = $this->documentStorage->getContents($path);
+            abort_if($contents === null, 404, 'File tidak ditemukan di Google Drive.');
+
+            return response($contents, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="'.addslashes($name).'"',
+            ]);
+        }
+
         abort_unless(Storage::disk('local')->exists($path), 404, 'File tidak ditemukan.');
 
         return response()->file(Storage::disk('local')->path($path), [
