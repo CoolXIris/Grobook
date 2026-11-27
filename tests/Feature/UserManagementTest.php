@@ -386,14 +386,18 @@ class UserManagementTest extends TestCase
         $this->assertSame(Role::TimNaskah, $added->role);
     }
 
-    public function test_ketua_dls_is_super_admin_with_all_roles_and_can_assign_multirole_and_switch_active_role(): void
+    public function test_ketua_dls_defaults_to_single_role_and_can_assign_multirole_and_switch_active_role(): void
     {
         [$team] = $this->makeTeam();
         $ketuaDls = User::factory()->ketuaDls()->create();
 
-        // Ketua DLS otomatis memiliki seluruh 4 role (Super Admin)
-        $this->assertTrue($ketuaDls->isSuperAdmin());
-        $this->assertCount(4, $ketuaDls->assignedRoles());
+        // Default Ketua DLS hanya memiliki role Ketua DLS saja
+        $this->assertSame([Role::KetuaDls], $ketuaDls->assignedRoles());
+
+        // Ketua DLS tidak bisa switch ke role lain jika belum di-assign
+        $this->actingAs($ketuaDls)->post(route('role.switch'), [
+            'role' => Role::PetugasDls->value,
+        ])->assertForbidden();
 
         // Ketua DLS dapat mengatur multirole untuk akun lain lewat Kelola User
         $user = User::factory()->create(['role' => Role::TimNaskah]);
@@ -424,12 +428,16 @@ class UserManagementTest extends TestCase
             'role' => Role::KetuaDls->value,
         ])->assertForbidden();
 
-        // Ketua DLS (Super Admin) dapat switch ke role mana saja dan kembali lagi ke Ketua DLS
-        $this->actingAs($ketuaDls)->post(route('role.switch'), [
+        // Jika Ketua DLS diberi multirole lewat Kelola User, ia dapat switch antar role tersebut
+        $this->actingAs($ketuaDls)->put(route('users.update', $ketuaDls), [
+            'name' => $ketuaDls->name,
+            'roles' => [Role::KetuaDls->value, Role::PetugasDls->value],
+        ])->assertRedirect(route('users.index'));
+
+        $this->actingAs($ketuaDls->fresh())->post(route('role.switch'), [
             'role' => Role::PetugasDls->value,
         ])->assertRedirect(route('dashboard'));
         $this->assertSame(Role::PetugasDls, $ketuaDls->fresh()->role);
-        $this->assertTrue($ketuaDls->fresh()->isSuperAdmin());
 
         $this->actingAs($ketuaDls->fresh())->post(route('role.switch'), [
             'role' => Role::KetuaDls->value,

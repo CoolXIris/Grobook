@@ -25,7 +25,7 @@
             @endif
 
             @php($selectedRoles = old('roles', array_map(fn (\App\Enums\Role $r) => $r->value, $user->assignedRoles())))
-            <x-field name="role" label="Role Akun (Multirole)" required hint="Centang satu atau lebih role yang diizinkan untuk akun ini. Ketua DLS bertindak sebagai Super Admin dan otomatis dapat mengakses seluruh role.">
+            <x-field name="role" label="Role Akun (Multirole)" required hint="Centang satu atau lebih role yang diizinkan untuk akun ini.">
                 <div class="mt-1 grid gap-2 sm:grid-cols-2">
                     @foreach (\App\Enums\Role::cases() as $roleOption)
                         <label class="flex cursor-pointer items-start gap-2.5 rounded-lg border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm transition hover:border-blue-300 hover:bg-white">
@@ -36,9 +36,6 @@
                                    @checked(in_array($roleOption->value, (array) $selectedRoles, true))>
                             <div>
                                 <p class="font-medium text-slate-800">{{ $roleOption->label() }}</p>
-                                @if ($roleOption === \App\Enums\Role::KetuaDls)
-                                    <p class="text-[11px] text-blue-700">Super Admin (bisa semua role)</p>
-                                @endif
                             </div>
                         </label>
                     @endforeach
@@ -78,15 +75,4 @@
             </div>
         </form>
     </div>
-
-    <script>
-        const roleCheckboxes = Array.from(document.querySelectorAll('.role-checkbox'));
-        const ketuaDlsCheckbox = roleCheckboxes.find(cb => cb.value === 'ketua_dls');
-
-        ketuaDlsCheckbox?.addEventListener('change', () => {
-            if (ketuaDlsCheckbox.checked) {
-                roleCheckboxes.forEach(cb => cb.checked = true);
-            }
-        });
-    </script>
 @endsection

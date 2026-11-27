@@ -6,6 +6,7 @@ use App\Models\PublicationFile;
 use App\Models\QualityCard;
 use App\Models\Revision;
 use App\Services\DocumentStorage;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -15,14 +16,14 @@ class FileController extends Controller
 {
     public function __construct(private DocumentStorage $documentStorage) {}
 
-    public function publicationFile(PublicationFile $publicationFile): BinaryFileResponse|Response
+    public function publicationFile(PublicationFile $publicationFile): BinaryFileResponse|Response|RedirectResponse
     {
         Gate::authorize('view', $publicationFile->publication);
 
         return $this->serve($publicationFile->file_path, $publicationFile->original_name);
     }
 
-    public function revisionFile(Revision $revision): BinaryFileResponse|Response
+    public function revisionFile(Revision $revision): BinaryFileResponse|Response|RedirectResponse
     {
         Gate::authorize('view', $revision->publication);
 
@@ -31,7 +32,7 @@ class FileController extends Controller
         return $this->serve($revision->file_path, $revision->original_name ?? 'detail-revisi.pdf');
     }
 
-    public function qualityCard(QualityCard $qualityCard): BinaryFileResponse|Response
+    public function qualityCard(QualityCard $qualityCard): BinaryFileResponse|Response|RedirectResponse
     {
         Gate::authorize('view', $qualityCard->publication);
 
@@ -40,16 +41,10 @@ class FileController extends Controller
         return $this->serve($qualityCard->pdf_path, 'Kartu Kendali '.$qualityCard->publication->number.'.pdf');
     }
 
-    private function serve(string $path, string $name): BinaryFileResponse|Response
+    private function serve(string $path, string $name): BinaryFileResponse|Response|RedirectResponse
     {
-        if ($this->documentStorage->isGoogleDrivePath($path)) {
-            $contents = $this->documentStorage->getContents($path);
-            abort_if($contents === null, 404, 'File tidak ditemukan di Google Drive.');
-
-            return response($contents, 200, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="'.addslashes($name).'"',
-            ]);
+        if ($driveUrl = $this->documentStorage->getDriveViewUrl($path)) {
+            return redirect()->away($driveUrl);
         }
 
         abort_unless(Storage::disk('local')->exists($path), 404, 'File tidak ditemukan.');

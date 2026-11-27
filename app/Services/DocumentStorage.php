@@ -20,6 +20,17 @@ class DocumentStorage
         return str_starts_with($path, self::GDRIVE_PREFIX);
     }
 
+    public function getDriveViewUrl(string $path): ?string
+    {
+        if (! $this->isGoogleDrivePath($path)) {
+            return null;
+        }
+
+        $fileId = substr($path, strlen(self::GDRIVE_PREFIX));
+
+        return "https://drive.google.com/file/d/{$fileId}/view";
+    }
+
     public function storeUploadedPdf(UploadedFile $file, string $category, string $fileName): string
     {
         return $this->storeContent(
@@ -95,21 +106,27 @@ class DocumentStorage
 
     private function uploadToGoogleDrive(string $token, string $content, string $category, string $fileName): ?string
     {
-        $rootFolderId = $this->ensureFolder($token, self::ROOT_FOLDER_NAME, null);
-        if ($rootFolderId === null) {
+        $parentId = $this->ensureFolder($token, self::ROOT_FOLDER_NAME, null);
+        if ($parentId === null) {
             return null;
         }
 
-        $topCategory = explode('/', trim($category, '/'))[0] ?: 'documents';
-        $categoryFolderId = $this->ensureFolder($token, $topCategory, $rootFolderId);
-        if ($categoryFolderId === null) {
-            return null;
+        $segments = array_values(array_filter(explode('/', trim($category, '/'))));
+        if ($segments === []) {
+            $segments = ['documents'];
+        }
+
+        foreach ($segments as $segment) {
+            $parentId = $this->ensureFolder($token, $segment, $parentId);
+            if ($parentId === null) {
+                return null;
+            }
         }
 
         $boundary = 'grobook_boundary_'.bin2hex(random_bytes(8));
         $metadata = json_encode([
             'name' => $fileName,
-            'parents' => [$categoryFolderId],
+            'parents' => [$parentId],
             'mimeType' => 'application/pdf',
         ]);
 
@@ -129,7 +146,15 @@ class DocumentStorage
             return null;
         }
 
-        return $response->json('id');
+        $fileId = $response->json('id');
+        if (is_string($fileId) && $fileId !== '') {
+            Http::withToken($token)->post("https://www.googleapis.com/drive/v3/files/{$fileId}/permissions", [
+                'role' => 'reader',
+                'type' => 'anyone',
+            ]);
+        }
+
+        return $fileId;
     }
 
     private function ensureFolder(string $token, string $folderName, ?string $parentId): ?string

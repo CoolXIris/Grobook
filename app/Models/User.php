@@ -53,11 +53,6 @@ class User extends Authenticatable
                 $normalized[] = $user->role->value;
             }
 
-            // Ketua DLS is Super Admin and always has access to all roles
-            if (in_array(Role::KetuaDls->value, $normalized, true) || $user->role === Role::KetuaDls) {
-                $normalized = $allRoleValues;
-            }
-
             // Preserve canonical order from Role::cases()
             $ordered = array_values(array_intersect($allRoleValues, array_unique($normalized)));
 
@@ -107,7 +102,6 @@ class User extends Authenticatable
 
     /**
      * All Role enums assigned to this account.
-     * Ketua DLS (Super Admin) automatically has all roles.
      *
      * @return list<Role>
      */
@@ -116,10 +110,6 @@ class User extends Authenticatable
         $raw = is_array($this->roles) ? $this->roles : [];
         if ($this->role !== null && ! in_array($this->role->value, $raw, true)) {
             $raw[] = $this->role->value;
-        }
-
-        if (in_array(Role::KetuaDls->value, $raw, true) || $this->role === Role::KetuaDls) {
-            return Role::cases();
         }
 
         $result = [];

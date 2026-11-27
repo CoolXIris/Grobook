@@ -201,22 +201,36 @@ class PublicationWorkflowTest extends TestCase
 
     public function test_pdfs_are_stored_and_served_from_google_drive_when_oauth_token_is_present(): void
     {
-        \Illuminate\Support\Facades\Http::fake([
-            'https://www.googleapis.com/drive/v3/files*' => \Illuminate\Support\Facades\Http::sequence()
-                ->push(['files' => [['id' => 'folder-root', 'name' => 'Grobook BPS Sumsel']]], 200)
-                ->push(['files' => [['id' => 'folder-pub', 'name' => 'publications']]], 200)
-                ->push(['id' => 'folder-root', 'trashed' => false], 200)
-                ->push(['files' => [['id' => 'folder-kk', 'name' => 'kartu-kendali']]], 200)
-                ->push(['id' => 'folder-root', 'trashed' => false], 200)
-                ->push(['files' => [['id' => 'folder-rev', 'name' => 'revisions']]], 200)
-                ->push('%PDF-1.4 drive-pdf-content', 200)
-                ->push('%PDF-1.4 drive-pdf-content', 200)
-                ->push('%PDF-1.4 drive-kk-content', 200),
-            'https://www.googleapis.com/upload/drive/v3/files*' => \Illuminate\Support\Facades\Http::sequence()
-                ->push(['id' => 'gdrive-file-pub-1'], 200)
-                ->push(['id' => 'gdrive-file-kk-1'], 200)
-                ->push(['id' => 'gdrive-file-rev-1'], 200),
-        ]);
+        $driveCalls = [];
+        \Illuminate\Support\Facades\Http::fake(function (\Illuminate\Http\Client\Request $request) use (&$driveCalls) {
+            $url = $request->url();
+            $driveCalls[] = $request->method().' '.$url;
+
+            if (str_contains($url, '/permissions')) {
+                return \Illuminate\Support\Facades\Http::response(['id' => 'anyoneWithLink'], 200);
+            }
+
+            if (str_starts_with($url, 'https://www.googleapis.com/upload/drive/v3/files')) {
+                static $uploadIdx = 0;
+                $ids = ['gdrive-file-pub-1', 'gdrive-file-kk-1', 'gdrive-file-rev-1'];
+
+                return \Illuminate\Support\Facades\Http::response(['id' => $ids[$uploadIdx++] ?? 'gdrive-file-extra'], 200);
+            }
+
+            if (str_contains($url, 'alt=media')) {
+                return \Illuminate\Support\Facades\Http::response('%PDF-1.4 drive-pdf-content', 200);
+            }
+
+            if (str_contains($url, 'fields=id%2Ctrashed') || str_contains($url, 'fields=id,trashed')) {
+                return \Illuminate\Support\Facades\Http::response(['id' => 'folder-cached', 'trashed' => false], 200);
+            }
+
+            if ($request->method() === 'GET' && str_starts_with($url, 'https://www.googleapis.com/drive/v3/files')) {
+                return \Illuminate\Support\Facades\Http::response(['files' => [['id' => 'folder-found', 'name' => 'folder']]], 200);
+            }
+
+            return \Illuminate\Support\Facades\Http::response(['id' => 'folder-created'], 200);
+        });
 
         [, $ketuaTim, $author] = $this->makeTeam();
         $petugas = User::factory()->petugasDls()->create();
@@ -248,10 +262,9 @@ class PublicationWorkflowTest extends TestCase
         $revision = $publication->revisions()->firstOrFail();
         $this->assertSame('gdrive:gdrive-file-rev-1', $revision->file_path);
 
-        // 4. Buka file PDF dari Google Drive lewat FileController
+        // 4. Buka file PDF -> redirect langsung ke Google Drive viewer
         $this->actingAs($author)->get(route('files.publication', $pubFile))
-            ->assertOk()
-            ->assertHeader('content-type', 'application/pdf');
+            ->assertRedirect('https://drive.google.com/file/d/gdrive-file-pub-1/view');
 
         // 5. Unduh paket ZIP dari Google Drive saat publikasi selesai
         $publication->update(['status' => PublicationStatus::Selesai, 'completed_at' => now()]);

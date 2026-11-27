@@ -139,10 +139,6 @@ class UserController extends Controller
             $raw = [(string) $request->input('role')];
         }
 
-        if (in_array(Role::KetuaDls->value, $raw, true)) {
-            $raw = $allRoleValues;
-        }
-
         $assignedRoleValues = array_values(array_intersect($allRoleValues, $raw));
 
         if ($request->filled('role') && in_array($request->string('role')->toString(), $assignedRoleValues, true)) {

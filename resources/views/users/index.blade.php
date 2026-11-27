@@ -40,15 +40,11 @@
                         <td class="px-4 py-3 text-slate-600">{{ $user->email }}</td>
                         <td class="px-4 py-3">
                             <div class="flex flex-wrap gap-1">
-                                @if ($user->isSuperAdmin())
-                                    <span class="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">Ketua DLS (Super Admin)</span>
-                                @else
-                                    @foreach ($user->assignedRoles() as $assignedRole)
-                                        <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold {{ $user->role === $assignedRole ? 'bg-blue-50 text-blue-800 ring-1 ring-inset ring-blue-600/20' : 'bg-slate-100 text-slate-600' }}">
-                                            {{ $assignedRole->label() }}
-                                        </span>
-                                    @endforeach
-                                @endif
+                                @foreach ($user->assignedRoles() as $assignedRole)
+                                    <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold {{ $user->role === $assignedRole ? 'bg-blue-50 text-blue-800 ring-1 ring-inset ring-blue-600/20' : 'bg-slate-100 text-slate-600' }}">
+                                        {{ $assignedRole->label() }}
+                                    </span>
+                                @endforeach
                             </div>
                         </td>
                         <td class="px-4 py-3 text-slate-600">{{ $user->team?->name ?? '—' }}</td>
